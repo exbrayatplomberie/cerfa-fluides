@@ -1,0 +1,11 @@
+CERFA FLUIDES EXBRAYAT - VERSION 4
+
+Nouveautes :
+- CERFA officiel 15497*04 rempli et signe.
+- Attestation de capacite SOCOTEC jointe.
+- Bouton Dossier complet PDF : CERFA + rapport detaille + photos + attestation.
+- Partage natif sur iPad quand disponible (Fichiers, Mail, AirDrop, impression).
+- Calcul automatique des cases de periodicite HFC/HFO a partir de la charge/t.eq.CO2.
+- Cache hors connexion mis a jour en version 4.
+
+Publication GitHub : envoyer tous les fichiers de ce dossier dans la racine du depot et valider Commit changes.

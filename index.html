@@ -20,7 +20,7 @@
 <div class="card"><h2>2. Équipement</h2><div class="grid3">
 <div><label>Type d'équipement</label><select id="equipmentType"><option>Climatisation</option><option>Pompe à chaleur air/air</option><option>Pompe à chaleur air/eau</option><option>Chambre froide</option><option>Autre</option></select></div><div><label>Marque</label><input id="brand"></div><div><label>Modèle</label><input id="model"></div>
 <div><label>N° de série</label><input id="serial"></div><div><label>Repère / emplacement</label><input id="location"></div><div><label>Année</label><input id="year" inputmode="numeric"></div>
-<div><label>Fluide *</label><select id="fluid"><option>R32</option><option>R410A</option><option>R134a</option><option>R404A</option><option>R407C</option><option>R290</option><option>R600a</option><option>Autre</option></select></div><div><label>Charge équipement (kg)</label><input id="initialCharge" type="number" step="0.001"></div><div><label>Tonnage équivalent CO₂ (si applicable)</label><input id="co2eq" type="number" step="0.001"></div>
+<div><label>Fluide *</label><select id="fluid"><option>R32</option><option>R410A</option><option>R134a</option><option>R404A</option><option>R407C</option><option>R290</option><option>R600a</option><option>R1234yf</option><option>Autre</option></select></div><div><label>Charge équipement (kg)</label><input id="initialCharge" type="number" step="0.001"></div><div><label>Tonnage équivalent CO₂ (si applicable)</label><input id="co2eq" type="number" step="0.001"></div>
 </div></div>
 <div class="card"><h2>3. Intervention</h2><div class="grid">
 <div><label>Nature de l'intervention *</label><select id="operation"><option>Mise en service</option><option>Maintenance / entretien</option><option>Contrôle d'étanchéité</option><option>Réparation</option><option>Récupération du fluide</option><option>Démantèlement</option><option>Autre</option></select></div><div><label>Détection de fuite</label><select id="leak"><option>Aucune fuite détectée</option><option>Fuite détectée et réparée</option><option>Fuite détectée non réparée</option><option>Non concerné</option></select></div><div><label>Détecteur manuel utilisé</label><input id="detectorId" placeholder="Ex. LT-100-PR02"></div><div><label>Système permanent de détection</label><select id="permanentDetection"><option value="NON">NON</option><option value="OUI">OUI</option></select></div>
@@ -28,7 +28,7 @@
 <div class="full"><label>Contrôles, travaux réalisés et observations *</label><textarea id="notes"></textarea></div><div class="full"><label>Pièces remplacées / préconisations</label><textarea id="parts"></textarea></div></div></div>
 <div class="card"><h2>4. Photos</h2><input id="photos" type="file" accept="image/*" capture="environment" multiple><div id="photoPreview" class="photo-preview"></div><div class="hint">Les photos restent enregistrées uniquement sur cet appareil avec la fiche.</div></div>
 <div class="card"><h2>5. Signatures</h2><div class="grid"><div><label>Signature du client</label><canvas id="clientSig" class="sig"></canvas><div class="hint">Signer directement dans le cadre avec le doigt ou l’Apple Pencil.</div><div class="actions"><button type="button" class="btn secondary" onclick="clearSig('clientSig')">Effacer</button></div></div><div><label>Signature du technicien</label><canvas id="techSig" class="sig"></canvas><div class="hint">Signer directement dans le cadre avec le doigt ou l’Apple Pencil.</div><div class="actions"><button type="button" class="btn secondary" onclick="clearSig('techSig')">Effacer</button></div></div></div></div>
-<div class="nav-bottom actions"><button class="btn good" id="saveBtn">Enregistrer</button><button class="btn primary" id="pdfBtn">Créer la fiche détaillée</button><button class="btn good" id="officialPdfBtn">CERFA officiel + attestation</button><button class="btn secondary" id="resetBtn">Nouvelle fiche vierge</button></div>
+<div class="nav-bottom actions"><button class="btn good" id="saveBtn">Enregistrer</button><button class="btn primary" id="pdfBtn">Créer la fiche détaillée</button><button class="btn good" id="officialPdfBtn">CERFA officiel + attestation</button><button class="btn primary" id="completePdfBtn">Dossier complet PDF</button><button class="btn secondary" id="resetBtn">Nouvelle fiche vierge</button></div>
 </section>
 <section id="history" class="tab hidden"><div class="card"><h2>Historique des interventions</h2><input id="historySearch" placeholder="Rechercher client, ville, fluide, série..."><div id="historyList"></div></div></section>
 <section id="clients" class="tab hidden"><div class="card"><h2>Clients enregistrés</h2><input id="clientSearch" placeholder="Rechercher un client"><div id="clientList"></div></div></section>
@@ -89,41 +89,83 @@ function pdf(){if(!validate())return;save();let d=formData(),s=DB.get('settings'
 
 function cleanFileName(s){return String(s||'client').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'-').replace(/^-+|-+$/g,'')||'client'}
 function dataUrlBytes(dataUrl){const b64=dataUrl.split(',')[1]||'';const bin=atob(b64),out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}
-async function createOfficialPdf(){
-  if(!validate())return;
-  const preview=window.open('about:blank','_blank');
-  try{
-    save();toast('Création du CERFA officiel...');
-    const d=formData(),s=DB.get('settings',getSettings()),{PDFDocument}=PDFLib;
-    const [cerfaBytes,certBytes]=await Promise.all([fetch('./cerfa_15497-04.pdf').then(r=>{if(!r.ok)throw new Error('CERFA introuvable');return r.arrayBuffer()}),fetch('./attestation-capacite-exbrayat.pdf').then(r=>{if(!r.ok)throw new Error('Attestation introuvable');return r.arrayBuffer()})]);
-    const pdfDoc=await PDFDocument.load(cerfaBytes),form=pdfDoc.getForm();
-    const text=(name,value)=>{try{form.getTextField(name).setText(String(value??''))}catch(e){console.warn(name,e)}};
-    const check=(name,on=true)=>{try{const f=form.getCheckBox(name);on?f.check():f.uncheck()}catch(e){console.warn(name,e)}};
-    const ficheNo=(d.date||new Date().toISOString().slice(0,10)).replaceAll('-','')+'-'+String(Date.now()).slice(-4);
-    const operateur=[s.companyName,s.companyAddress,'SIRET '+s.companySiret].filter(Boolean).join('\n');
-    const detenteur=[d.clientName,d.clientAddress,[d.clientZip,d.clientCity].filter(Boolean).join(' '),d.clientSiret?'SIRET '+d.clientSiret:''].filter(Boolean).join('\n');
-    const equip=[d.equipmentType,[d.brand,d.model].filter(Boolean).join(' '),d.serial?'N° série : '+d.serial:'',d.location?'Emplacement : '+d.location:''].filter(Boolean).join('\n');
-    text('Fiche_no',ficheNo);text('Operateur',operateur);text('Attestation_no',s.capacityNo);text('Detenteur',detenteur);text('Equipement_ID',equip);text('Equipement_Fluide',String(d.fluid||'').replace(/^R/i,''));text('Equipement_Charge',d.initialCharge);text('Equipement_teqCO2',d.co2eq);
-    const op=d.operation||'';check('Case_Assemblage',/assemblage/i.test(op));check('Case_MiseService',/mise en service/i.test(op));check('Case_Modif',/modification|réparation/i.test(op));check('Case_Maintenance',/maintenance|entretien/i.test(op));check('Case_CtrlPerio',/contrôle d'étanchéité/i.test(op));check('Case_CtrlNonPerio',/réparation/i.test(op));check('Case_Demantel',/démantèlement/i.test(op));check('Case_Autre',/autre/i.test(op));if(/autre/i.test(op))text('Autre',op);
-    text('Detecteur_ID',d.detectorId);const parts=(d.date||'').split('-');text('Controle_Jour',parts[2]||'');text('Controle_Mois',parts[1]||'');text('Controle_Annee',parts[0]||'');
-    try{form.getRadioGroup('Bouton_Oui').select(d.permanentDetection==='OUI'?'Oui':'Non')}catch(e){console.warn('Bouton_Oui',e)}
-    const leakYes=/détectée/i.test(d.leak||'')&&!/aucune/i.test(d.leak||'');check('Case_Fuite_Oui',leakYes);check('Case_Fuite_Non',!leakYes);if(leakYes){text('Fuite_Loca_1',d.notes);check(/réparée/i.test(d.leak||'')?'Case_Rep_Fuite1_realisee':'Case_Rep_Fuite1_AFaire',true)}
-    const added=parseFloat(d.added)||0,recovered=parseFloat(d.recovered)||0,recycled=parseFloat(d.recycled)||0;text('11_Quantite',added?added.toFixed(3):'');text('11_QA',added?added.toFixed(3):'');text('11_Denom',d.fluid);text('11_QB',recycled?recycled.toFixed(3):'');text('11_QDE',recovered?recovered.toFixed(3):'');text('11_QD',recovered?recovered.toFixed(3):'');text('11_BSFF',d.bsff);text('11_Contenant_ID',d.bottle);
-    const flammable=['R32','R290','R600A','R1234YF'].includes(String(d.fluid||'').toUpperCase());check(flammable?'Case_12_UN3161':'Case_12_UN1078',true);text('13_Instal',d.fluidDestination);text('14_Observations',[d.notes,d.parts&&('Pièces / préconisations : '+d.parts)].filter(Boolean).join('\n'));
-    text('Sign_Operateur_Nom',s.technician||'Cédric Exbrayat');text('Sign_Operateur_Qualite','Gérant');text('Sign_Operateur_Date',d.date||'');text('Sign_Detenteur_Nom',d.clientName);text('Sign_Detenteur_Qualite','Détenteur');text('Sign_Detenteur_Date',d.date||'');
-    form.updateFieldAppearances();
-    const page=pdfDoc.getPages()[0];
-    if(signatureState.techSig?.hasInk){const img=await pdfDoc.embedPng(dataUrlBytes(d.techSig));page.drawImage(img,{x:215,y:45,width:116,height:17,opacity:.95})}
-    if(signatureState.clientSig?.hasInk){const img=await pdfDoc.embedPng(dataUrlBytes(d.clientSig));page.drawImage(img,{x:430,y:45,width:116,height:17,opacity:.95})}
-    form.flatten();
-    const certDoc=await PDFDocument.load(certBytes),certPages=await pdfDoc.copyPages(certDoc,certDoc.getPageIndices());certPages.forEach(p=>pdfDoc.addPage(p));
-    const out=await pdfDoc.save(),blob=new Blob([out],{type:'application/pdf'}),url=URL.createObjectURL(blob),name=`${d.date||'date'}_${cleanFileName(d.clientName)}_CERFA-15497-et-attestation.pdf`;
-    if(preview){preview.document.title=name;preview.location.href=url}else{const a=document.createElement('a');a.href=url;a.download=name;a.click()}
-    toast('CERFA officiel créé avec l’attestation en page 2');setTimeout(()=>URL.revokeObjectURL(url),120000);
-  }catch(err){if(preview)preview.close();console.error(err);alert('Impossible de créer le CERFA officiel : '+err.message)}
+async function blobFromPdfBytes(bytes){return new Blob([bytes],{type:'application/pdf'})}
+async function deliverPdf(bytes,name){
+  const blob=await blobFromPdfBytes(bytes);
+  const file=new File([blob],name,{type:'application/pdf'});
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    try{await navigator.share({title:name,files:[file]});toast('PDF prêt à partager ou enregistrer');return}catch(e){if(e.name==='AbortError')return}
+  }
+  const url=URL.createObjectURL(blob),preview=window.open(url,'_blank');
+  if(!preview){const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+  setTimeout(()=>URL.revokeObjectURL(url),180000);
 }
+function normPdfText(v){return String(v??'').replace(/[–—]/g,'-').replace(/\u202f/g,' ')}
+function autoFrequencyChecks(form,d,check){
+  const fluid=String(d.fluid||'').toUpperCase(),charge=parseFloat(d.initialCharge)||0,teq=parseFloat(d.co2eq)||0,withPermanent=d.permanentDetection==='OUI';
+  let period='';
+  if(/^R(32|134A|404A|407C|410A)/.test(fluid) && teq>=5){
+    if(teq>=500){check('Case_HFC_500');period=withPermanent?'6m':'3m'}else if(teq>=50){check('Case_HFC_50');period=withPermanent?'12m':'6m'}else{check('Case_HFC_5');period=withPermanent?'24m':'12m'}
+  }else if(/^R1234/.test(fluid) && charge>=1){
+    if(charge>=100){check('Case_HFO_100');period=withPermanent?'6m':'3m'}else if(charge>=10){check('Case_HFO_10');period=withPermanent?'12m':'6m'}else{check('Case_HFO_1');period=withPermanent?'24m':'12m'}
+  }
+  if(period)check((withPermanent?'Case_Avec_':'Case_Sans_')+period);
+}
+async function buildOfficialDocument(includeDetailed=false){
+  if(!validate())return null;
+  save();
+  const d=formData(),s=DB.get('settings',getSettings()),{PDFDocument,StandardFonts,rgb}=PDFLib;
+  const [cerfaBytes,certBytes]=await Promise.all([
+    fetch('./cerfa_15497-04.pdf').then(r=>{if(!r.ok)throw new Error('CERFA officiel introuvable');return r.arrayBuffer()}),
+    fetch('./attestation-capacite-exbrayat.pdf').then(r=>{if(!r.ok)throw new Error('Attestation de capacité introuvable');return r.arrayBuffer()})
+  ]);
+  const pdfDoc=await PDFDocument.load(cerfaBytes),form=pdfDoc.getForm();
+  const text=(name,value)=>{try{const f=form.getTextField(name);f.setText(normPdfText(value));}catch(e){console.warn('Champ',name,e)}};
+  const check=(name,on=true)=>{try{const f=form.getCheckBox(name);on?f.check():f.uncheck()}catch(e){console.warn('Case',name,e)}};
+  const ficheNo=(d.date||new Date().toISOString().slice(0,10)).replaceAll('-','')+'-'+String(Date.now()).slice(-4);
+  const operateur=[s.companyName,s.companyAddress,'SIRET '+s.companySiret].filter(Boolean).join('\n');
+  const detenteur=[d.clientName,d.clientAddress,[d.clientZip,d.clientCity].filter(Boolean).join(' '),d.clientSiret?'SIRET '+d.clientSiret:''].filter(Boolean).join('\n');
+  const equip=[d.equipmentType,[d.brand,d.model].filter(Boolean).join(' '),d.serial?'N° série : '+d.serial:'',d.location?'Emplacement : '+d.location:''].filter(Boolean).join('\n');
+  text('Fiche_no',ficheNo);text('Operateur',operateur);text('Attestation_no',s.capacityNo);text('Detenteur',detenteur);text('Equipement_ID',equip);text('Equipement_Fluide',String(d.fluid||'').replace(/^R/i,''));text('Equipement_Charge',d.initialCharge);text('Equipement_teqCO2',d.co2eq);
+  const op=d.operation||'';check('Case_Assemblage',/assemblage/i.test(op));check('Case_MiseService',/mise en service/i.test(op));check('Case_Modif',/modification|réparation/i.test(op));check('Case_Maintenance',/maintenance|entretien/i.test(op));check('Case_CtrlPerio',/contrôle d'étanchéité/i.test(op));check('Case_CtrlNonPerio',/réparation/i.test(op));check('Case_Demantel',/démantèlement/i.test(op));check('Case_Autre',/autre|récupération/i.test(op));if(/autre|récupération/i.test(op))text('Autre',op);
+  text('Detecteur_ID',d.detectorId);const parts=(d.date||'').split('-');text('Controle_Jour',parts[2]||'');text('Controle_Mois',parts[1]||'');text('Controle_Annee',parts[0]||'');
+  try{form.getRadioGroup('Bouton_Oui').select(d.permanentDetection==='OUI'?'Oui':'Non')}catch(e){console.warn('Détection permanente',e)}
+  autoFrequencyChecks(form,d,check);
+  const leakYes=/fuite détectée/i.test(d.leak||'')&&!/aucune/i.test(d.leak||'');check('Case_Fuite_Oui',leakYes);check('Case_Fuite_Non',!leakYes);if(leakYes){text('Fuite_Loca_1',d.notes);check(/réparée/i.test(d.leak||'')?'Case_Rep_Fuite1_realisee':'Case_Rep_Fuite1_AFaire')}
+  const added=parseFloat(d.added)||0,recovered=parseFloat(d.recovered)||0,recycled=parseFloat(d.recycled)||0;
+  text('11_Quantite',added?added.toFixed(3):'');text('11_QA',added?Math.max(0,added-recycled).toFixed(3):'');text('11_Denom',d.fluid);text('11_QB',recycled?recycled.toFixed(3):'');text('11_QC','');text('11_QDE',recovered?recovered.toFixed(3):'');text('11_QD',recovered?recovered.toFixed(3):'');text('11_QE','');text('11_BSFF',d.bsff);text('11_Contenant_ID',d.bottle);
+  const flammable=['R32','R290','R600A','R1234YF'].includes(String(d.fluid||'').toUpperCase());check(flammable?'Case_12_UN3161':'Case_12_UN1078');text('13_Instal',d.fluidDestination);text('14_Observations',[d.notes,d.parts&&('Pièces / préconisations : '+d.parts)].filter(Boolean).join('\n'));
+  text('Sign_Operateur_Nom',s.technician||'Cédric Exbrayat');text('Sign_Operateur_Qualite','Gérant');text('Sign_Operateur_Date',d.date||'');text('Sign_Detenteur_Nom',d.clientName);text('Sign_Detenteur_Qualite','Détenteur');text('Sign_Detenteur_Date',d.date||'');
+  form.updateFieldAppearances();const page=pdfDoc.getPages()[0];
+  if(signatureState.techSig?.hasInk){const img=await pdfDoc.embedPng(dataUrlBytes(d.techSig));page.drawImage(img,{x:215,y:43,width:116,height:20,opacity:.95})}
+  if(signatureState.clientSig?.hasInk){const img=await pdfDoc.embedPng(dataUrlBytes(d.clientSig));page.drawImage(img,{x:430,y:43,width:116,height:20,opacity:.95})}
+  form.flatten();
+  if(includeDetailed){
+    const font=await pdfDoc.embedFont(StandardFonts.Helvetica),bold=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const A4=[595.28,841.89],margin=38,line=14;
+    const addPage=()=>pdfDoc.addPage(A4);let p=addPage(),y=805;
+    const write=(txt,x=margin,size=10,f=font,max=520)=>{const words=normPdfText(txt).split(/\s+/);let row='';for(const w of words){const t=row?row+' '+w:w;if(f.widthOfTextAtSize(t,size)>max){p.drawText(row,{x,y,size,font:f,color:rgb(0.08,0.12,0.17)});y-=line;row=w}else row=t}if(row){p.drawText(row,{x,y,size,font:f,color:rgb(0.08,0.12,0.17)});y-=line}};
+    const section=t=>{if(y<100){p=addPage();y=805}y-=5;p.drawRectangle({x:margin-4,y:y-4,width:527,height:22,color:rgb(.90,.94,.98)});p.drawText(t,{x:margin,y:y+2,size:11,font:bold,color:rgb(.04,.28,.50)});y-=27};
+    p.drawText("RAPPORT D'INTERVENTION - FLUIDES FRIGORIGENES",{x:70,y,size:16,font:bold,color:rgb(.04,.28,.50)});y-=30;write(`Date : ${d.date}   Fiche : ${ficheNo}`,margin,10,bold);
+    section('OPÉRATEUR');write(`${s.companyName} - ${s.companyAddress}`);write(`SIRET : ${s.companySiret} - Attestation : ${s.capacityNo}`);write(`Technicien : ${s.technician}`);
+    section('CLIENT / DÉTENTEUR');write(`${d.clientName} - ${d.clientAddress}, ${d.clientZip} ${d.clientCity}`);write(`Téléphone : ${d.clientPhone||'-'} - Email : ${d.clientEmail||'-'}${d.clientSiret?' - SIRET : '+d.clientSiret:''}`);
+    section('ÉQUIPEMENT');write(`${d.equipmentType} - ${d.brand} ${d.model} - N° série : ${d.serial||'-'}`);write(`Emplacement : ${d.location||'-'} - Fluide : ${d.fluid} - Charge : ${d.initialCharge||'-'} kg - t.eq.CO2 : ${d.co2eq||'-'}`);
+    section('INTERVENTION');write(`Nature : ${d.operation} - Contrôle fuite : ${d.leak}`);write(`Ajout : ${d.added||'0'} kg - Récupération : ${d.recovered||'0'} kg - Recyclé/régénéré : ${d.recycled||'0'} kg`);write(`Bouteille : ${d.bottle||'-'} - BSFF : ${d.bsff||'-'}`);write(`Destination fluide : ${d.fluidDestination||'-'}`);write(`Travaux et observations : ${d.notes||'-'}`);write(`Pièces / préconisations : ${d.parts||'-'}`);
+    section('SIGNATURES');
+    if(signatureState.techSig?.hasInk){const im=await pdfDoc.embedPng(dataUrlBytes(d.techSig));p.drawText('Technicien',{x:margin,y,size:9,font:bold});p.drawImage(im,{x:margin,y:y-65,width:210,height:58});}
+    if(signatureState.clientSig?.hasInk){const im=await pdfDoc.embedPng(dataUrlBytes(d.clientSig));p.drawText('Client / détenteur',{x:315,y,size:9,font:bold});p.drawImage(im,{x:315,y:y-65,width:210,height:58});}y-=85;
+    for(let i=0;i<d.photos.length;i++){
+      if(y<260){p=addPage();y=805}const u=d.photos[i];let im;try{im=u.startsWith('data:image/png')?await pdfDoc.embedPng(dataUrlBytes(u)):await pdfDoc.embedJpg(dataUrlBytes(u))}catch{continue}
+      const dims=im.scale(1),maxW=500,maxH=230,scale=Math.min(maxW/dims.width,maxH/dims.height,1);p.drawText(`Photo ${i+1}`,{x:margin,y,size:9,font:bold});y-=8;p.drawImage(im,{x:margin,y:y-dims.height*scale,width:dims.width*scale,height:dims.height*scale});y-=dims.height*scale+20;
+    }
+  }
+  const certDoc=await PDFDocument.load(certBytes),certPages=await pdfDoc.copyPages(certDoc,certDoc.getPageIndices());certPages.forEach(p=>pdfDoc.addPage(p));
+  return {bytes:await pdfDoc.save(),d,ficheNo};
+}
+async function createOfficialPdf(){try{toast('Création du CERFA officiel...');const r=await buildOfficialDocument(false);if(!r)return;await deliverPdf(r.bytes,`${r.d.date||'date'}_${cleanFileName(r.d.clientName)}_CERFA-15497-attestation.pdf`)}catch(err){console.error(err);alert('Impossible de créer le CERFA officiel : '+err.message)}}
+async function createCompletePdf(){try{toast('Création du dossier complet...');const r=await buildOfficialDocument(true);if(!r)return;await deliverPdf(r.bytes,`${r.d.date||'date'}_${cleanFileName(r.d.clientName)}_DOSSIER-COMPLET-fluides.pdf`)}catch(err){console.error(err);alert('Impossible de créer le dossier complet : '+err.message)}}
 
-$('saveBtn').onclick=save;$('pdfBtn').onclick=pdf;$('officialPdfBtn').onclick=createOfficialPdf;$('resetBtn').onclick=()=>{if(confirm('Effacer la saisie actuelle ?'))resetForm()};
+$('saveBtn').onclick=save;$('pdfBtn').onclick=pdf;$('officialPdfBtn').onclick=createOfficialPdf;$('completePdfBtn').onclick=createCompletePdf;$('resetBtn').onclick=()=>{if(confirm('Effacer la saisie actuelle ?'))resetForm()};
 setupSig('clientSig');setupSig('techSig');loadSettings();fillClientSelect();resetForm();
 if(location.protocol!=='https:' && location.hostname!=='localhost'){toast('Installation incomplète : ouvre cette application depuis une adresse HTTPS pour la signature, les photos et le mode hors connexion.');}
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){navigator.serviceWorker.register('./service-worker.js').catch(()=>toast('Le mode hors connexion n’a pas pu être activé.'));}

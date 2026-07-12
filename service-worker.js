@@ -1,4 +1,4 @@
-const CACHE='cerfa-exbrayat-v3';
+const CACHE='cerfa-exbrayat-v4';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png',
   './attestation-capacite-exbrayat.pdf',
   './cerfa_15497-04.pdf',
