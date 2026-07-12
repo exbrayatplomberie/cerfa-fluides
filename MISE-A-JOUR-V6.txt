@@ -1,0 +1,4 @@
+VERSION 6 - MESURES TECHNIQUES
+
+Ajouts : mesures électriques, pressions BP/HP, températures, calculs ΔT/surchauffe/sous-refroidissement et cases de contrôles.
+Déposer tous les fichiers à la racine du dépôt GitHub puis Commit changes.
