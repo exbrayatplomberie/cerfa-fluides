@@ -6,15 +6,29 @@
   <meta name="theme-color" content="#174a68">
   <title>EXBRAYAT PRO - Fluides</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=0.3.0">
+  <link rel="stylesheet" href="style.css?v=0.5.0">
 </head>
 <body>
+
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <img src="logo-exbrayat.png" alt="Logo Exbrayat" class="lock-logo">
+    <h1>EXBRAYAT PRO</h1>
+    <p>Application verrouillée</p>
+    <label for="pinInput">Code à 6 chiffres</label>
+    <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off">
+    <button id="unlockBtn" type="button">Déverrouiller</button>
+    <p id="lockMessage" class="lock-message" aria-live="polite"></p>
+  </div>
+</div>
+
 <header class="topbar">
+  <img src="logo-exbrayat.png" alt="Logo Exbrayat" class="app-logo">
   <div>
     <h1>EXBRAYAT PRO</h1>
     <p>Interventions fluides frigorigènes</p>
   </div>
-  <span class="version">Version 0.3.0 CERFA complet</span>
+  <span class="version">Version 0.5.0 Sécurité locale</span>
 </header>
 
 <nav class="tabs" aria-label="Navigation">
@@ -40,6 +54,9 @@
       </label>
       <label>Téléphone
         <input id="clientTel" name="clientTel" type="tel" inputmode="tel">
+      </label>
+      <label>E-mail du client
+        <input id="clientEmail" name="clientEmail" type="email" inputmode="email" autocomplete="email">
       </label>
       <label class="span2">Adresse
         <input id="clientAdresse" name="clientAdresse" autocomplete="street-address">
@@ -252,7 +269,8 @@
 
   <div class="actions sticky">
     <button type="button" id="saveBtn">Enregistrer le dossier</button>
-    <button type="button" id="reportPdfBtn" class="secondary">Télécharger le rapport PDF</button>
+    <button type="button" id="completePdfBtn" class="complete">DOSSIER CLIENT COMPLET</button>
+    <button type="button" id="reportPdfBtn" class="secondary">Rapport PDF seul</button>
     <button type="button" id="cerfaPdfBtn" class="success">CERFA officiel + attestation</button>
     <button type="button" id="printBtn" class="secondary">Imprimer la fiche</button>
     <button type="button" id="newBtn" class="danger">Nouvelle fiche</button>
@@ -288,11 +306,33 @@
       <a href="attestation-capacite.pdf" target="_blank">Voir l'attestation de capacité</a>
     </div>
   </section>
+
+  <section class="card">
+    <h2>Sécurité et sauvegarde</h2>
+    <p class="hint">Les dossiers sont chiffrés sur cet appareil avec votre code.</p>
+    <div class="actions">
+      <button type="button" id="lockNowBtn" class="secondary">Verrouiller maintenant</button>
+      <button type="button" id="exportBackupBtn" class="secondary">Exporter une sauvegarde chiffrée</button>
+      <label class="file-button">Importer une sauvegarde
+        <input id="importBackupInput" type="file" accept=".exbrayat,.json" hidden>
+      </label>
+    </div>
+    <label>Verrouillage automatique
+      <select id="autoLockMinutes">
+        <option value="5">5 minutes</option>
+        <option value="10">10 minutes</option>
+        <option value="15" selected>15 minutes</option>
+        <option value="30">30 minutes</option>
+        <option value="60">1 heure</option>
+      </select>
+    </label>
+  </section>
+
 </section>
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="pdf-lib.min.js?v=0.3.0"></script>
-<script src="app.js?v=0.3.0"></script>
+<script src="pdf-lib.min.js?v=0.5.0"></script>
+<script src="app.js?v=0.5.0"></script>
 </body>
 </html>

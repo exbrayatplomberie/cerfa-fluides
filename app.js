@@ -1,18 +1,152 @@
 
 'use strict';
-const VERSION='0.3.0-cerfa-complet';
+const VERSION='0.5.0-securite-locale';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
+
+const SECURITY_CONFIG={
+  salt:'Ogeiael5/EG/dw93Zp99lQ==',
+  verifier:'ddMk44umF7IwCMtcekiUQtqClSv37Un9NKYyt4Hogg8=',
+  iterations:250000
+};
+const ENC_STORE='exbrayat_pro_dossiers_encrypted';
+let sessionKey=null;
+let autoLockTimer=null;
+
+function b64ToBytes(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+function bytesToB64(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s)}
+async function deriveKeyBytes(pin){
+ const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+ const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:b64ToBytes(SECURITY_CONFIG.salt),iterations:SECURITY_CONFIG.iterations,hash:'SHA-256'},material,256);
+ return new Uint8Array(bits);
+}
+async function makeAesKey(keyBytes){
+ return crypto.subtle.importKey('raw',keyBytes,{name:'AES-GCM'},false,['encrypt','decrypt']);
+}
+async function verifyPin(pin){
+ const derived=await deriveKeyBytes(pin);
+ const expected=b64ToBytes(SECURITY_CONFIG.verifier);
+ if(derived.length!==expected.length)return false;
+ let diff=0;for(let i=0;i<derived.length;i++)diff|=derived[i]^expected[i];
+ if(diff===0)sessionKey=await makeAesKey(derived);
+ return diff===0;
+}
+async function encryptJson(value){
+ if(!sessionKey)throw new Error('Application verrouillée');
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const data=new TextEncoder().encode(JSON.stringify(value));
+ const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},sessionKey,data);
+ return JSON.stringify({v:1,iv:bytesToB64(iv),data:bytesToB64(new Uint8Array(cipher))});
+}
+async function decryptJson(payload){
+ if(!sessionKey)throw new Error('Application verrouillée');
+ const obj=typeof payload==='string'?JSON.parse(payload):payload;
+ const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(obj.iv)},sessionKey,b64ToBytes(obj.data));
+ return JSON.parse(new TextDecoder().decode(clear));
+}
+function lockApp(){
+ sessionKey=null;
+ document.body.classList.add('locked');
+ $('#lockScreen').classList.remove('hidden');
+ $('#pinInput').value='';
+ $('#lockMessage').textContent='';
+ setTimeout(()=>$('#pinInput').focus(),100);
+}
+function unlockApp(){
+ document.body.classList.remove('locked');
+ $('#lockScreen').classList.add('hidden');
+ resetAutoLock();
+}
+function resetAutoLock(){
+ clearTimeout(autoLockTimer);
+ const mins=parseInt(localStorage.getItem('exbrayat_auto_lock')||'15',10);
+ autoLockTimer=setTimeout(lockApp,mins*60*1000);
+}
+async function handleUnlock(){
+ const pin=$('#pinInput').value.trim();
+ if(!/^\d{6}$/.test(pin)){$('#lockMessage').textContent='Saisissez 6 chiffres.';return}
+ $('#unlockBtn').disabled=true;
+ $('#lockMessage').textContent='Vérification…';
+ try{
+   if(await verifyPin(pin)){
+     $('#lockMessage').textContent='';
+     await migratePlainDataIfNeeded();
+     unlockApp();
+     await renderHistorySecure();
+   }else{
+     $('#lockMessage').textContent='Code incorrect.';
+   }
+ }catch(e){
+   console.error(e);$('#lockMessage').textContent='Erreur de déverrouillage.';
+ }
+ $('#unlockBtn').disabled=false;
+}
+async function migratePlainDataIfNeeded(){
+ const old=localStorage.getItem(STORE);
+ if(old && !localStorage.getItem(ENC_STORE)){
+   try{
+     const list=JSON.parse(old);
+     localStorage.setItem(ENC_STORE,await encryptJson(list));
+     localStorage.removeItem(STORE);
+   }catch(e){console.error('Migration',e)}
+ }
+}
+async function loadDossiersSecure(){
+ const enc=localStorage.getItem(ENC_STORE);
+ if(!enc)return [];
+ try{return await decryptJson(enc)}catch(e){console.error(e);return []}
+}
+async function saveDossierSecure(){
+ if(!form.reportValidity())return;
+ const obj=formDataObject(),list=await loadDossiersSecure();
+ const i=list.findIndex(x=>x.ficheNo===obj.ficheNo);
+ if(i>=0)list[i]=obj;else list.unshift(obj);
+ localStorage.setItem(ENC_STORE,await encryptJson(list));
+ await renderHistorySecure();
+ toast('Dossier chiffré et enregistré');
+}
+async function renderHistorySecure(filter=''){
+ const list=await loadDossiersSecure(),q=filter.toLowerCase().trim(),box=$('#historyList');box.innerHTML='';
+ list.filter(d=>`${d.ficheNo} ${d.clientNom} ${d.clientAdresse} ${d.dateIntervention}`.toLowerCase().includes(q)).forEach(d=>{
+   const row=document.createElement('div');row.className='history-item';
+   row.innerHTML=`<div><strong>${escapeHtml(d.clientNom||'Sans nom')}</strong><p>${escapeHtml(d.ficheNo||'')} - ${escapeHtml(d.dateIntervention||'')}</p></div><div><button type="button" class="load">Ouvrir</button> <button type="button" class="danger del">Supprimer</button></div>`;
+   row.querySelector('.load').onclick=()=>fillForm(d);
+   row.querySelector('.del').onclick=async()=>{if(confirm('Supprimer ce dossier ?')){const updated=(await loadDossiersSecure()).filter(x=>x.ficheNo!==d.ficheNo);localStorage.setItem(ENC_STORE,await encryptJson(updated));await renderHistorySecure($('#historySearch').value)}};
+   box.appendChild(row);
+ });
+ if(!box.children.length)box.innerHTML='<p class="hint">Aucun dossier trouvé.</p>';
+}
+async function exportEncryptedBackup(){
+ const enc=localStorage.getItem(ENC_STORE);
+ const payload={
+   type:'EXBRAYAT_PRO_BACKUP',
+   version:VERSION,
+   exportedAt:new Date().toISOString(),
+   encryptedDossiers:enc,
+   settings:localStorage.getItem(SETTINGS)
+ };
+ const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=`EXBRAYAT_PRO_SAUVEGARDE_${new Date().toISOString().slice(0,10)}.exbrayat`;
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+ toast('Sauvegarde chiffrée exportée');
+}
+async function importEncryptedBackup(file){
+ const text=await file.text(),payload=JSON.parse(text);
+ if(payload.type!=='EXBRAYAT_PRO_BACKUP')throw new Error('Fichier invalide');
+ if(!confirm('Remplacer les dossiers présents par cette sauvegarde ?'))return;
+ if(payload.encryptedDossiers)localStorage.setItem(ENC_STORE,payload.encryptedDossiers);
+ if(payload.settings)localStorage.setItem(SETTINGS,payload.settings);
+ location.reload();
+}
+
 const form=document.getElementById('intervention-form');
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
 function today(){return new Date().toISOString().slice(0,10)}
-function nextNo(){
-  const d=new Date(), y=d.getFullYear(), list=loadDossiers();
-  return `${y}-${String(list.length+1).padStart(4,'0')}`;
-}
+function nextNo(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`}
 function defaultSettings(){
  return {
    entrepriseNom:'SARL EXBRAYAT CEDRIC PLOMBERIE CHAUFFAGE',
@@ -50,14 +184,8 @@ function formDataObject(){
  obj.savedAt=new Date().toISOString();obj.version=VERSION;
  return obj;
 }
-function loadDossiers(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
-function saveDossier(){
- if(!form.reportValidity())return;
- const obj=formDataObject(), list=loadDossiers();
- const i=list.findIndex(x=>x.ficheNo===obj.ficheNo);
- if(i>=0)list[i]=obj;else list.unshift(obj);
- localStorage.setItem(STORE,JSON.stringify(list));renderHistory();toast('Dossier enregistré sur cet appareil');
-}
+function loadDossiers(){return []}catch{return []}}
+function saveDossier(){return saveDossierSecure()}
 function fillForm(d){
  form.reset();
  Object.entries(d).forEach(([k,v])=>{
@@ -72,17 +200,7 @@ function newForm(){
  if(!confirm('Effacer la fiche en cours ?'))return;
  form.reset();clearSignature('signatureTechnicien');clearSignature('signatureClient');applyDefaults(true);calculate();toast('Nouvelle fiche prête');
 }
-function renderHistory(filter=''){
- const list=loadDossiers(), q=filter.toLowerCase().trim(), box=$('#historyList');box.innerHTML='';
- list.filter(d=>`${d.ficheNo} ${d.clientNom} ${d.clientAdresse} ${d.dateIntervention}`.toLowerCase().includes(q)).forEach(d=>{
-   const row=document.createElement('div');row.className='history-item';
-   row.innerHTML=`<div><strong>${escapeHtml(d.clientNom||'Sans nom')}</strong><p>${escapeHtml(d.ficheNo||'')} - ${escapeHtml(d.dateIntervention||'')}</p></div><div><button type="button" class="load">Ouvrir</button> <button type="button" class="danger del">Supprimer</button></div>`;
-   row.querySelector('.load').onclick=()=>fillForm(d);
-   row.querySelector('.del').onclick=()=>{if(confirm('Supprimer ce dossier ?')){localStorage.setItem(STORE,JSON.stringify(loadDossiers().filter(x=>x.ficheNo!==d.ficheNo)));renderHistory($('#historySearch').value)}};
-   box.appendChild(row);
- });
- if(!box.children.length)box.innerHTML='<p class="hint">Aucun dossier trouvé.</p>';
-}
+function renderHistory(filter=''){return renderHistorySecure(filter)}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function num(name){const v=parseFloat(form.elements[name]?.value);return Number.isFinite(v)?v:null}
 function showCalc(id,val){$(id).value=Number.isFinite(val)?val.toFixed(1):''}
@@ -385,6 +503,111 @@ function setText(formPdf,name,value){
 function check(formPdf,name,on){
  try{const f=formPdf.getCheckBox(name);on?f.check():f.uncheck()}catch(_){}
 }
+
+async function createCompleteDossierPdf(){
+ if(!form.reportValidity())return;
+ saveDossier();
+ const d=formDataObject(),s=loadSettings();
+
+ try{
+   const finalPdf=await PDFDocument.create();
+   const font=await finalPdf.embedFont(StandardFonts.Helvetica);
+   const bold=await finalPdf.embedFont(StandardFonts.HelveticaBold);
+
+   let page=finalPdf.addPage([595.28,841.89]);
+
+   // En-tête séparé : le titre ne peut plus chevaucher les coordonnées.
+   page.drawRectangle({x:0,y:775,width:595.28,height:66,color:rgb(.09,.29,.41)});
+   page.drawText('RAPPORT D’INTERVENTION',{x:180,y:805,size:18,font:bold,color:rgb(1,1,1)});
+   page.drawText(`Fiche ${cleanText(d.ficheNo)} - ${formatDateFr(d.dateIntervention)}`,{x:180,y:785,size:10,font,color:rgb(1,1,1)});
+
+   try{
+     const logoBytes=await fetchBytes('logo-exbrayat.png');
+     const logo=await finalPdf.embedPng(logoBytes);
+     page.drawImage(logo,{x:28,y:650,width:120,height:110});
+   }catch(_){}
+
+   page.drawText(cleanText(s.entrepriseNom),{x:175,y:735,size:11,font:bold,color:rgb(.09,.29,.41)});
+   page.drawText(cleanText(s.entrepriseAdresse),{x:175,y:716,size:9,font});
+   page.drawText('Tél. 06 17 16 15 38',{x:175,y:699,size:9,font});
+   page.drawText('ent.exbrayat@gmail.com',{x:175,y:683,size:9,font});
+   page.drawText(`SIRET : ${cleanText(s.entrepriseSiret)}`,{x:175,y:667,size:9,font});
+   page.drawLine({start:{x:32,y:638},end:{x:563,y:638},thickness:1,color:rgb(.75,.82,.86)});
+
+   let y=615;
+   y=drawSection(page,bold,'CLIENT ET EQUIPEMENT',y);
+   y=drawRows(page,font,bold,[
+     ['Client',d.clientNom],['Téléphone',d.clientTel],
+     ['E-mail',d.clientEmail],['Adresse',d.clientAdresse],
+     ['Équipement',`${d.equipMarque||''} ${d.equipModele||''}`],['N° de série',d.equipSerie],
+     ['Localisation',d.equipLocalisation],['Fluide',d.fluide],
+     ['Charge totale',d.chargeTotale?`${numberText(d.chargeTotale)} kg`:'' ],
+     ['Tonnage équivalent CO₂',d.teqCO2?`${numberText(d.teqCO2)} t.éq.CO₂`:'' ]
+   ],y);
+
+   y=drawSection(page,bold,'INTERVENTION ET CONTROLES',y);
+   y=drawLabelValue(page,font,bold,'Nature de l’intervention',(d.nature||[]).join(', '),32,y,531)-8;
+   y=drawLabelValue(page,font,bold,'Contrôles réalisés',(d.controle||[]).join(', '),32,y,531)-8;
+   y=drawRows(page,font,bold,[['Détecteur',d.detecteurId],['Contrôlé le',formatDateFr(d.detecteurDate)]],y);
+
+   page=finalPdf.addPage([595.28,841.89]);
+   page.drawRectangle({x:0,y:790,width:595.28,height:51,color:rgb(.09,.29,.41)});
+   page.drawText('MESURES TECHNIQUES ET SIGNATURES',{x:115,y:808,size:16,font:bold,color:rgb(1,1,1)});
+   y=760;
+
+   y=drawRows(page,font,bold,[
+     ['Tension',d.tension?`${numberText(d.tension)} V`:'' ],['Intensité totale',d.intensiteTotale?`${numberText(d.intensiteTotale)} A`:'' ],
+     ['Intensité compresseur',d.intensiteComp?`${numberText(d.intensiteComp)} A`:'' ],['Fréquence',d.frequence?`${numberText(d.frequence)} Hz`:'' ],
+     ['Pression BP',d.pressionBP?`${numberText(d.pressionBP)} bar`:'' ],['Pression HP',d.pressionHP?`${numberText(d.pressionHP)} bar`:'' ],
+     ['T° aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],['T° refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
+     ['Surchauffe',d.surchauffe?`${numberText(d.surchauffe)} K`:'' ],['Sous-refroidissement',d.sousRefroidissement?`${numberText(d.sousRefroidissement)} K`:'' ],
+     ['Air repris / soufflé',`${numberText(d.airRepris)} / ${numberText(d.airSouffle)} °C`],['Delta T air',d.deltaAir?`${numberText(d.deltaAir)} K`:'' ],
+     ['Départ / retour eau',`${numberText(d.departEau)} / ${numberText(d.retourEau)} °C`],['Delta T eau',d.deltaEau?`${numberText(d.deltaEau)} K`:'' ]
+   ],y);
+
+   y=drawSection(page,bold,'FLUIDES ET OBSERVATIONS',y);
+   y=drawRows(page,font,bold,[
+     ['Fluide vierge chargé',d.fluideVierge?`${numberText(d.fluideVierge)} kg`:'' ],
+     ['Fluide recyclé chargé',d.fluideRecycle?`${numberText(d.fluideRecycle)} kg`:'' ],
+     ['Fluide régénéré chargé',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
+     ['Destiné au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
+     ['Conservé pour réutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
+     ['N° BSFF',d.numeroBSFF],['Contenants',d.contenantsId],['Destination',d.installationDestination]
+   ],y);
+   y=drawLabelValue(page,font,bold,'Observations',d.observations,32,y,531)-12;
+
+   page.drawText('Signatures',{x:32,y:190,size:12,font:bold,color:rgb(.09,.29,.41)});
+   if(d.signatureTechnicien){
+     const img=await finalPdf.embedPng(d.signatureTechnicien);
+     page.drawText('Technicien',{x:32,y:168,size:9,font:bold});
+     page.drawImage(img,{x:32,y:65,width:220,height:90});
+   }
+   if(d.signatureClient){
+     const img=await finalPdf.embedPng(d.signatureClient);
+     page.drawText('Client / détenteur',{x:320,y:168,size:9,font:bold});
+     page.drawImage(img,{x:320,y:65,width:220,height:90});
+   }
+
+   // Ajout du CERFA officiel puis de l'attestation.
+   const cerfaBytes=await fetchBytes('cerfa_15497-04.pdf');
+   const cerfaPdf=await PDFDocument.load(cerfaBytes);
+   const cerfaPages=await finalPdf.copyPages(cerfaPdf,cerfaPdf.getPageIndices());
+   cerfaPages.forEach(pg=>finalPdf.addPage(pg));
+
+   const attBytes=await fetchBytes('attestation-capacite.pdf');
+   const attPdf=await PDFDocument.load(attBytes);
+   const attPages=await finalPdf.copyPages(attPdf,attPdf.getPageIndices());
+   attPages.forEach(pg=>finalPdf.addPage(pg));
+
+   const bytes=await finalPdf.save();
+   downloadBytes(bytes,`${d.dateIntervention}_${safeName(d.clientNom)}_${d.ficheNo}_DOSSIER_COMPLET.pdf`);
+   toast('Dossier client complet créé');
+ }catch(err){
+   console.error(err);
+   alert('Impossible de créer le dossier complet : '+err.message);
+ }
+}
+
 async function createCerfaPdf(){
  if(!form.reportValidity())return;
  saveDossier();
@@ -512,15 +735,27 @@ $$('.clear-signature').forEach(b=>b.onclick=()=>clearSignature(b.dataset.target)
 ['signatureTechnicien','signatureClient'].forEach(setupCanvas);
 form.addEventListener('input',calculate);
 $('#saveBtn').onclick=saveDossier;
+$('#completePdfBtn').onclick=createCompleteDossierPdf;
 $('#reportPdfBtn').onclick=createReportPdf;
 $('#cerfaPdfBtn').onclick=createCerfaPdf;
 $('#printBtn').onclick=()=>{saveDossier();setTimeout(()=>window.print(),350)};
 $('#newBtn').onclick=newForm;
 $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
-renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.3.0').catch(console.error))}
+$('#unlockBtn').onclick=handleUnlock;
+$('#pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')handleUnlock()});
+$('#lockNowBtn').onclick=lockApp;
+$('#exportBackupBtn').onclick=exportEncryptedBackup;
+$('#importBackupInput').onchange=e=>{const f=e.target.files[0];if(f)importEncryptedBackup(f).catch(err=>alert(err.message))};
+$('#autoLockMinutes').value=localStorage.getItem('exbrayat_auto_lock')||'15';
+$('#autoLockMinutes').onchange=e=>{localStorage.setItem('exbrayat_auto_lock',e.target.value);resetAutoLock()};
+['pointerdown','keydown','touchstart'].forEach(evt=>document.addEventListener(evt,()=>{if(sessionKey)resetAutoLock()},{passive:true}));
+document.body.classList.add('locked');
+
+renderSettings();applyDefaults(true);calculate();
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.5.0').catch(console.error))}
 
 
 function showPlatformNote(){

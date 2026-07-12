@@ -1,5 +1,5 @@
 {
-  "name": "EXBRAYAT PRO - CERFA complet",
+  "name": "EXBRAYAT PRO - Sécurisé",
   "short_name": "EXBRAYAT PRO",
   "start_url": "./index.html",
   "scope": "./",
@@ -15,5 +15,5 @@
       "purpose": "any maskable"
     }
   ],
-  "version": "0.3.0"
+  "version": "0.5.0"
 }
