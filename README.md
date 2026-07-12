@@ -1,8 +1,6 @@
-# EXBRAYAT PRO v0.4.2.2 Stable
+# EXBRAYAT PRO v0.4.2
 
-Base inchangée : version 0.4.2 fonctionnelle.
-
-Modification unique :
-- le bouton Dossier client complet télécharge le rapport PDF ;
-- puis le CERFA officiel avec l'attestation de capacité.
-- signatures, boutons, historique et formulaire non modifiés.
+- Correction du bouton Rapport PDF seul.
+- Titre dans un bandeau indépendant.
+- Logo et coordonnées placés sous le titre.
+- Aucun chevauchement possible.

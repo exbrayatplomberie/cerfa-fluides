@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.2.2-stable';
+const VERSION='0.4.2-rapport-corrige';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -632,12 +632,7 @@ $$('.clear-signature').forEach(b=>b.onclick=()=>clearSignature(b.dataset.target)
 ['signatureTechnicien','signatureClient'].forEach(setupCanvas);
 form.addEventListener('input',calculate);
 $('#saveBtn').onclick=saveDossier;
-$('#completePdfBtn').onclick=async()=>{
-  if(!form.reportValidity())return;
-  await createReportPdf();
-  setTimeout(()=>createCerfaPdf(),900);
-  toast('Le rapport puis le CERFA avec attestation vont être téléchargés');
-};
+$('#completePdfBtn').onclick=createCompleteDossierPdf;
 $('#reportPdfBtn').onclick=createReportPdf;
 $('#cerfaPdfBtn').onclick=createCerfaPdf;
 $('#printBtn').onclick=()=>{saveDossier();setTimeout(()=>window.print(),350)};
@@ -646,7 +641,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.2').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2').catch(console.error))}
 
 
 function showPlatformNote(){
