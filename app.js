@@ -1,143 +1,45 @@
 
 'use strict';
-const VERSION='0.5.0-securite-locale';
+const VERSION='0.4.1.1-verrouillage-simple';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 
-const SECURITY_CONFIG={
-  salt:'Ogeiael5/EG/dw93Zp99lQ==',
-  verifier:'ddMk44umF7IwCMtcekiUQtqClSv37Un9NKYyt4Hogg8=',
-  iterations:250000
-};
-const ENC_STORE='exbrayat_pro_dossiers_encrypted';
-let sessionKey=null;
-let autoLockTimer=null;
+const LOCAL_PIN = ['0','3','6','9','1','2'].join('');
 
-function b64ToBytes(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
-function bytesToB64(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s)}
-async function deriveKeyBytes(pin){
- const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
- const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:b64ToBytes(SECURITY_CONFIG.salt),iterations:SECURITY_CONFIG.iterations,hash:'SHA-256'},material,256);
- return new Uint8Array(bits);
-}
-async function makeAesKey(keyBytes){
- return crypto.subtle.importKey('raw',keyBytes,{name:'AES-GCM'},false,['encrypt','decrypt']);
-}
-async function verifyPin(pin){
- const derived=await deriveKeyBytes(pin);
- const expected=b64ToBytes(SECURITY_CONFIG.verifier);
- if(derived.length!==expected.length)return false;
- let diff=0;for(let i=0;i<derived.length;i++)diff|=derived[i]^expected[i];
- if(diff===0)sessionKey=await makeAesKey(derived);
- return diff===0;
-}
-async function encryptJson(value){
- if(!sessionKey)throw new Error('Application verrouillée');
- const iv=crypto.getRandomValues(new Uint8Array(12));
- const data=new TextEncoder().encode(JSON.stringify(value));
- const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},sessionKey,data);
- return JSON.stringify({v:1,iv:bytesToB64(iv),data:bytesToB64(new Uint8Array(cipher))});
-}
-async function decryptJson(payload){
- if(!sessionKey)throw new Error('Application verrouillée');
- const obj=typeof payload==='string'?JSON.parse(payload):payload;
- const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(obj.iv)},sessionKey,b64ToBytes(obj.data));
- return JSON.parse(new TextDecoder().decode(clear));
-}
 function lockApp(){
- sessionKey=null;
- document.body.classList.add('locked');
- $('#lockScreen').classList.remove('hidden');
- $('#pinInput').value='';
- $('#lockMessage').textContent='';
- setTimeout(()=>$('#pinInput').focus(),100);
+  sessionStorage.removeItem('exbrayat_unlocked');
+  document.body.classList.add('locked');
+  const screen=document.getElementById('lockScreen');
+  screen.classList.remove('hidden');
+  const input=document.getElementById('pinInput');
+  input.value='';
+  document.getElementById('lockMessage').textContent='';
+  setTimeout(()=>input.focus(),150);
 }
+
 function unlockApp(){
- document.body.classList.remove('locked');
- $('#lockScreen').classList.add('hidden');
- resetAutoLock();
+  sessionStorage.setItem('exbrayat_unlocked','1');
+  document.body.classList.remove('locked');
+  document.getElementById('lockScreen').classList.add('hidden');
 }
-function resetAutoLock(){
- clearTimeout(autoLockTimer);
- const mins=parseInt(localStorage.getItem('exbrayat_auto_lock')||'15',10);
- autoLockTimer=setTimeout(lockApp,mins*60*1000);
-}
-async function handleUnlock(){
- const pin=$('#pinInput').value.trim();
- if(!/^\d{6}$/.test(pin)){$('#lockMessage').textContent='Saisissez 6 chiffres.';return}
- $('#unlockBtn').disabled=true;
- $('#lockMessage').textContent='Vérification…';
- try{
-   if(await verifyPin(pin)){
-     $('#lockMessage').textContent='';
-     await migratePlainDataIfNeeded();
-     unlockApp();
-     await renderHistorySecure();
-   }else{
-     $('#lockMessage').textContent='Code incorrect.';
-   }
- }catch(e){
-   console.error(e);$('#lockMessage').textContent='Erreur de déverrouillage.';
- }
- $('#unlockBtn').disabled=false;
-}
-async function migratePlainDataIfNeeded(){
- const old=localStorage.getItem(STORE);
- if(old && !localStorage.getItem(ENC_STORE)){
-   try{
-     const list=JSON.parse(old);
-     localStorage.setItem(ENC_STORE,await encryptJson(list));
-     localStorage.removeItem(STORE);
-   }catch(e){console.error('Migration',e)}
- }
-}
-async function loadDossiersSecure(){
- const enc=localStorage.getItem(ENC_STORE);
- if(!enc)return [];
- try{return await decryptJson(enc)}catch(e){console.error(e);return []}
-}
-async function saveDossierSecure(){
- if(!form.reportValidity())return;
- const obj=formDataObject(),list=await loadDossiersSecure();
- const i=list.findIndex(x=>x.ficheNo===obj.ficheNo);
- if(i>=0)list[i]=obj;else list.unshift(obj);
- localStorage.setItem(ENC_STORE,await encryptJson(list));
- await renderHistorySecure();
- toast('Dossier chiffré et enregistré');
-}
-async function renderHistorySecure(filter=''){
- const list=await loadDossiersSecure(),q=filter.toLowerCase().trim(),box=$('#historyList');box.innerHTML='';
- list.filter(d=>`${d.ficheNo} ${d.clientNom} ${d.clientAdresse} ${d.dateIntervention}`.toLowerCase().includes(q)).forEach(d=>{
-   const row=document.createElement('div');row.className='history-item';
-   row.innerHTML=`<div><strong>${escapeHtml(d.clientNom||'Sans nom')}</strong><p>${escapeHtml(d.ficheNo||'')} - ${escapeHtml(d.dateIntervention||'')}</p></div><div><button type="button" class="load">Ouvrir</button> <button type="button" class="danger del">Supprimer</button></div>`;
-   row.querySelector('.load').onclick=()=>fillForm(d);
-   row.querySelector('.del').onclick=async()=>{if(confirm('Supprimer ce dossier ?')){const updated=(await loadDossiersSecure()).filter(x=>x.ficheNo!==d.ficheNo);localStorage.setItem(ENC_STORE,await encryptJson(updated));await renderHistorySecure($('#historySearch').value)}};
-   box.appendChild(row);
- });
- if(!box.children.length)box.innerHTML='<p class="hint">Aucun dossier trouvé.</p>';
-}
-async function exportEncryptedBackup(){
- const enc=localStorage.getItem(ENC_STORE);
- const payload={
-   type:'EXBRAYAT_PRO_BACKUP',
-   version:VERSION,
-   exportedAt:new Date().toISOString(),
-   encryptedDossiers:enc,
-   settings:localStorage.getItem(SETTINGS)
- };
- const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download=`EXBRAYAT_PRO_SAUVEGARDE_${new Date().toISOString().slice(0,10)}.exbrayat`;
- document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
- toast('Sauvegarde chiffrée exportée');
-}
-async function importEncryptedBackup(file){
- const text=await file.text(),payload=JSON.parse(text);
- if(payload.type!=='EXBRAYAT_PRO_BACKUP')throw new Error('Fichier invalide');
- if(!confirm('Remplacer les dossiers présents par cette sauvegarde ?'))return;
- if(payload.encryptedDossiers)localStorage.setItem(ENC_STORE,payload.encryptedDossiers);
- if(payload.settings)localStorage.setItem(SETTINGS,payload.settings);
- location.reload();
+
+function handleUnlock(){
+  const input=document.getElementById('pinInput');
+  const msg=document.getElementById('lockMessage');
+  const value=(input.value||'').replace(/\D/g,'').slice(0,6);
+  input.value=value;
+  if(value.length!==6){
+    msg.textContent='Saisissez 6 chiffres.';
+    return;
+  }
+  if(value===LOCAL_PIN){
+    msg.textContent='';
+    unlockApp();
+  }else{
+    msg.textContent='Code incorrect.';
+    input.value='';
+    setTimeout(()=>input.focus(),100);
+  }
 }
 
 const form=document.getElementById('intervention-form');
@@ -146,7 +48,10 @@ const $$=s=>[...document.querySelectorAll(s)];
 
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
 function today(){return new Date().toISOString().slice(0,10)}
-function nextNo(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`}
+function nextNo(){
+  const d=new Date(), y=d.getFullYear(), list=loadDossiers();
+  return `${y}-${String(list.length+1).padStart(4,'0')}`;
+}
 function defaultSettings(){
  return {
    entrepriseNom:'SARL EXBRAYAT CEDRIC PLOMBERIE CHAUFFAGE',
@@ -184,8 +89,14 @@ function formDataObject(){
  obj.savedAt=new Date().toISOString();obj.version=VERSION;
  return obj;
 }
-function loadDossiers(){return []}catch{return []}}
-function saveDossier(){return saveDossierSecure()}
+function loadDossiers(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
+function saveDossier(){
+ if(!form.reportValidity())return;
+ const obj=formDataObject(), list=loadDossiers();
+ const i=list.findIndex(x=>x.ficheNo===obj.ficheNo);
+ if(i>=0)list[i]=obj;else list.unshift(obj);
+ localStorage.setItem(STORE,JSON.stringify(list));renderHistory();toast('Dossier enregistré sur cet appareil');
+}
 function fillForm(d){
  form.reset();
  Object.entries(d).forEach(([k,v])=>{
@@ -200,7 +111,17 @@ function newForm(){
  if(!confirm('Effacer la fiche en cours ?'))return;
  form.reset();clearSignature('signatureTechnicien');clearSignature('signatureClient');applyDefaults(true);calculate();toast('Nouvelle fiche prête');
 }
-function renderHistory(filter=''){return renderHistorySecure(filter)}
+function renderHistory(filter=''){
+ const list=loadDossiers(), q=filter.toLowerCase().trim(), box=$('#historyList');box.innerHTML='';
+ list.filter(d=>`${d.ficheNo} ${d.clientNom} ${d.clientAdresse} ${d.dateIntervention}`.toLowerCase().includes(q)).forEach(d=>{
+   const row=document.createElement('div');row.className='history-item';
+   row.innerHTML=`<div><strong>${escapeHtml(d.clientNom||'Sans nom')}</strong><p>${escapeHtml(d.ficheNo||'')} - ${escapeHtml(d.dateIntervention||'')}</p></div><div><button type="button" class="load">Ouvrir</button> <button type="button" class="danger del">Supprimer</button></div>`;
+   row.querySelector('.load').onclick=()=>fillForm(d);
+   row.querySelector('.del').onclick=()=>{if(confirm('Supprimer ce dossier ?')){localStorage.setItem(STORE,JSON.stringify(loadDossiers().filter(x=>x.ficheNo!==d.ficheNo)));renderHistory($('#historySearch').value)}};
+   box.appendChild(row);
+ });
+ if(!box.children.length)box.innerHTML='<p class="hint">Aucun dossier trouvé.</p>';
+}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function num(name){const v=parseFloat(form.elements[name]?.value);return Number.isFinite(v)?v:null}
 function showCalc(id,val){$(id).value=Number.isFinite(val)?val.toFixed(1):''}
@@ -743,19 +664,22 @@ $('#newBtn').onclick=newForm;
 $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 
-$('#unlockBtn').onclick=handleUnlock;
-$('#pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')handleUnlock()});
-$('#lockNowBtn').onclick=lockApp;
-$('#exportBackupBtn').onclick=exportEncryptedBackup;
-$('#importBackupInput').onchange=e=>{const f=e.target.files[0];if(f)importEncryptedBackup(f).catch(err=>alert(err.message))};
-$('#autoLockMinutes').value=localStorage.getItem('exbrayat_auto_lock')||'15';
-$('#autoLockMinutes').onchange=e=>{localStorage.setItem('exbrayat_auto_lock',e.target.value);resetAutoLock()};
-['pointerdown','keydown','touchstart'].forEach(evt=>document.addEventListener(evt,()=>{if(sessionKey)resetAutoLock()},{passive:true}));
-document.body.classList.add('locked');
+const unlockButton=document.getElementById('unlockBtn');
+const pinField=document.getElementById('pinInput');
+const lockButton=document.getElementById('lockNowBtn');
 
-renderSettings();applyDefaults(true);calculate();
+unlockButton.onclick=handleUnlock;
+pinField.oninput=()=>{pinField.value=pinField.value.replace(/\D/g,'').slice(0,6)};
+pinField.onkeydown=e=>{if(e.key==='Enter')handleUnlock()};
+if(lockButton)lockButton.onclick=lockApp;
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.5.0').catch(console.error))}
+if(sessionStorage.getItem('exbrayat_unlocked')==='1')unlockApp();
+else lockApp();
+
+renderSettings();applyDefaults(true);calculate();renderHistory();
+
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.1.1').catch(console.error))}
 
 
 function showPlatformNote(){

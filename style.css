@@ -85,13 +85,10 @@ button.complete{background:#7a3f00;font-size:1.02rem}
 
 .lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#0f344a,#174a68);display:flex;align-items:center;justify-content:center;padding:20px}
 .lock-screen.hidden{display:none}
-.lock-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
-.lock-logo{width:130px;height:130px;object-fit:contain}
+.lock-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.lock-logo{width:125px;height:125px;object-fit:contain}
 .lock-card h1{margin:8px 0 2px;color:#174a68}
-.lock-card p{color:#667784}
-.lock-card label{text-align:left;margin-top:20px}
-.lock-card input{font-size:26px;text-align:center;letter-spacing:10px;margin:8px 0 14px}
-.lock-card button{width:100%}
-.lock-message{min-height:22px;color:#a62a2a!important;font-weight:700}
-.file-button{display:inline-flex;align-items:center;justify-content:center;background:#526a78;color:#fff;padding:12px 16px;border-radius:10px;font-weight:800;cursor:pointer}
-body.locked>header,body.locked>nav,body.locked>main{filter:blur(5px);pointer-events:none;user-select:none}
+.lock-card input{font-size:28px;text-align:center;letter-spacing:10px;margin:8px 0 14px;min-height:56px}
+.lock-card button{width:100%;min-height:54px}
+.lock-message{min-height:24px;color:#a62a2a;font-weight:800}
+body.locked>header,body.locked>nav,body.locked>main{filter:blur(4px);pointer-events:none;user-select:none}
