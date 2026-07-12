@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.2.0-pdf-ipad';
+const VERSION='0.3.0-cerfa-complet';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -42,7 +42,7 @@ function checkedValues(name){return $$(`input[name="${name}"]:checked`).map(x=>x
 function formDataObject(){
  const fd=new FormData(form), obj={};
  for(const [k,v] of fd.entries()){if(k!=='nature'&&k!=='controle')obj[k]=v}
- obj.nature=checkedValues('nature');obj.controle=checkedValues('controle');
+ obj.nature=checkedValues('nature');obj.controle=checkedValues('controle');obj.adr=checkedValues('adr');
  obj.surchauffe=$('#surchauffe').value;obj.sousRefroidissement=$('#sousRefroidissement').value;
  obj.deltaAir=$('#deltaAir').value;obj.deltaEau=$('#deltaEau').value;
  obj.signatureTechnicien=getSignature('signatureTechnicien');
@@ -61,10 +61,10 @@ function saveDossier(){
 function fillForm(d){
  form.reset();
  Object.entries(d).forEach(([k,v])=>{
-   if(['nature','controle','signatureTechnicien','signatureClient','savedAt','version'].includes(k))return;
+   if(['nature','controle','adr','signatureTechnicien','signatureClient','savedAt','version'].includes(k))return;
    const el=form.elements[k]; if(el && typeof v!=='object')el.value=v??'';
  });
- ['nature','controle'].forEach(n=>$$(`input[name="${n}"]`).forEach(x=>x.checked=(d[n]||[]).includes(x.value)));
+ ['nature','controle','adr'].forEach(n=>$$(`input[name="${n}"]`).forEach(x=>x.checked=(d[n]||[]).includes(x.value)));
  setSignature('signatureTechnicien',d.signatureTechnicien);setSignature('signatureClient',d.signatureClient);
  calculate();switchPage('intervention');toast(`Fiche ${d.ficheNo} chargée`);
 }
@@ -86,13 +86,61 @@ function renderHistory(filter=''){
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function num(name){const v=parseFloat(form.elements[name]?.value);return Number.isFinite(v)?v:null}
 function showCalc(id,val){$(id).value=Number.isFinite(val)?val.toFixed(1):''}
+
+const GWP_VALUES={
+  R32:675,
+  R410A:2088,
+  R407C:1774,
+  R134a:1430,
+  R454B:466,
+  R290:3
+};
+function autoTeqCO2(){
+ const fluid=$('#fluide').value;
+ const charge=num('chargeTotale');
+ const field=$('#teqCO2');
+ if(charge!==null && GWP_VALUES[fluid]!==undefined && !field.dataset.manual){
+   field.value=(charge*GWP_VALUES[fluid]/1000).toFixed(3);
+ }
+}
+function periodicity(){
+ const family=$('#familleFluide').value;
+ const permanent=form.elements.systemePermanent?.value==='oui';
+ const charge=num('chargeTotale')||0;
+ const teq=parseFloat($('#teqCO2').value)||0;
+ let threshold='',freq='';
+
+ if(family==='HCFC'){
+   if(charge>=300){threshold='HCFC ≥ 300 kg';freq=permanent?'6m':'3m'}
+   else if(charge>=30){threshold='HCFC 30 à < 300 kg';freq=permanent?'12m':'6m'}
+   else if(charge>=2){threshold='HCFC 2 à < 30 kg';freq=permanent?'24m':'12m'}
+ }else if(family==='HFO'){
+   if(charge>=100){threshold='HFO ≥ 100 kg';freq=permanent?'6m':'3m'}
+   else if(charge>=10){threshold='HFO 10 à < 100 kg';freq=permanent?'12m':'6m'}
+   else if(charge>=1){threshold='HFO 1 à < 10 kg';freq=permanent?'24m':'12m'}
+ }else{
+   if(teq>=500){threshold='HFC/PFC ≥ 500 t.éq.CO₂';freq=permanent?'6m':'3m'}
+   else if(teq>=50){threshold='HFC/PFC 50 à < 500 t.éq.CO₂';freq=permanent?'12m':'6m'}
+   else if(teq>=5){threshold='HFC/PFC 5 à < 50 t.éq.CO₂';freq=permanent?'24m':'12m'}
+ }
+ if(!$('#frequenceControle').value) $('#periodiciteInfo').textContent=threshold?`${threshold} - contrôle tous les ${freq.replace('m',' mois')}`:'Seuil réglementaire non atteint ou données incomplètes.';
+ else $('#periodiciteInfo').textContent=`Fréquence sélectionnée manuellement : ${$('#frequenceControle').selectedOptions[0].textContent}`;
+ return {family,permanent,charge,teq,threshold,freq:$('#frequenceControle').value||freq};
+}
+
 function calculate(){
+ autoTeqCO2();
  const asp=num('tempAspiration'), satbp=num('tempSatBP'), liq=num('tempLiquide'), sathp=num('tempSatHP');
  const repris=num('airRepris'), souffle=num('airSouffle'), dep=num('departEau'), ret=num('retourEau');
  showCalc('#surchauffe',asp!==null&&satbp!==null?asp-satbp:NaN);
  showCalc('#sousRefroidissement',sathp!==null&&liq!==null?sathp-liq:NaN);
  showCalc('#deltaAir',repris!==null&&souffle!==null?Math.abs(repris-souffle):NaN);
  showCalc('#deltaEau',dep!==null&&ret!==null?Math.abs(dep-ret):NaN);
+ const A=num('fluideVierge')||0,B=num('fluideRecycle')||0,C=num('fluideRegenere')||0;
+ const D=num('fluideTraitement')||0,E=num('fluideReutilisation')||0;
+ showCalc('#totalChargeManip',A+B+C);
+ showCalc('#totalRecupereManip',D+E);
+ periodicity();
 }
 function setupCanvas(id){
  const canvas=document.getElementById(id);
@@ -306,7 +354,11 @@ async function createReportPdf(){
   ['Fluide vierge chargé',d.fluideVierge?`${numberText(d.fluideVierge)} kg`:'' ],
   ['Fluide recyclé chargé',d.fluideRecycle?`${numberText(d.fluideRecycle)} kg`:'' ],
   ['Fluide régénéré chargé',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
-  ['Fluide récupéré',d.fluideRecupere?`${numberText(d.fluideRecupere)} kg`:'' ]
+  ['Destiné au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
+  ['Conservé pour réutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
+  ['N° BSFF',d.numeroBSFF],
+  ['Contenants',d.contenantsId],
+  ['Destination',d.installationDestination]
  ],y);
  y=drawLabelValue(page,font,bold,'Observations',d.observations,32,y,531)-10;
 
@@ -349,6 +401,7 @@ async function createCerfaPdf(){
    setText(formPdf,'Equipement_ID',`${d.equipMarque||''} ${d.equipModele||''} - N° série ${d.equipSerie||''} - ${d.equipLocalisation||''}`);
    setText(formPdf,'Equipement_Fluide',d.fluide);
    setText(formPdf,'Equipement_Charge',numberText(d.chargeTotale));
+   setText(formPdf,'Equipement_teqCO2',numberText(d.teqCO2));
 
    const n=d.nature||[];
    check(formPdf,'Case_Assemblage',n.includes('Assemblage'));
@@ -365,13 +418,60 @@ async function createCerfaPdf(){
    setText(formPdf,'Controle_Mois',dt[1]||'');
    setText(formPdf,'Controle_Annee',dt[0]||'');
 
-   const A=parseFloat(d.fluideVierge||0),B=parseFloat(d.fluideRecycle||0),C=parseFloat(d.fluideRegenere||0),E=parseFloat(d.fluideRecupere||0);
+   // 6 - système permanent
+   check(formPdf,'Bouton_Oui',d.systemePermanent==='oui');
+
+   // 7, 8 et 9 - seuil et périodicité
+   const per=periodicity();
+   check(formPdf,'Case_HCFC_2',per.family==='HCFC' && per.charge>=2 && per.charge<30);
+   check(formPdf,'Case_HCFC_30',per.family==='HCFC' && per.charge>=30 && per.charge<300);
+   check(formPdf,'Case_HCFC_300',per.family==='HCFC' && per.charge>=300);
+   check(formPdf,'Case_HFC_5',per.family==='HFC' && per.teq>=5 && per.teq<50);
+   check(formPdf,'Case_HFC_50',per.family==='HFC' && per.teq>=50 && per.teq<500);
+   check(formPdf,'Case_HFC_500',per.family==='HFC' && per.teq>=500);
+   check(formPdf,'Case_HFO_1',per.family==='HFO' && per.charge>=1 && per.charge<10);
+   check(formPdf,'Case_HFO_10',per.family==='HFO' && per.charge>=10 && per.charge<100);
+   check(formPdf,'Case_HFO_100',per.family==='HFO' && per.charge>=100);
+
+   check(formPdf,'Case_Sans_12m',!per.permanent && per.freq==='12m');
+   check(formPdf,'Case_Sans_6m',!per.permanent && per.freq==='6m');
+   check(formPdf,'Case_Sans_3m',!per.permanent && per.freq==='3m');
+   check(formPdf,'Case_Avec_24m',per.permanent && per.freq==='24m');
+   check(formPdf,'Case_Avec_12m',per.permanent && per.freq==='12m');
+   check(formPdf,'Case_Avec_6m',per.permanent && per.freq==='6m');
+
+   // 10 - fuites
+   check(formPdf,'Case_Fuite_Oui',d.fuiteConstatee==='oui');
+   check(formPdf,'Case_Fuite_Non',d.fuiteConstatee!=='oui');
+   for(let i=1;i<=3;i++){
+     setText(formPdf,`Fuite_Loca_${i}`,d[`fuiteLoca${i}`]);
+     check(formPdf,`Case_Rep_Fuite${i}_realisee`,d[`fuiteRep${i}`]==='realisee');
+     check(formPdf,`Case_Rep_Fuite${i}_AFaire`,d[`fuiteRep${i}`]==='afaire');
+   }
+
+   const A=parseFloat(d.fluideVierge||0),B=parseFloat(d.fluideRecycle||0),C=parseFloat(d.fluideRegenere||0),D=parseFloat(d.fluideTraitement||0),E=parseFloat(d.fluideReutilisation||0);
    setText(formPdf,'11_Quantite',(A+B+C)?numberText((A+B+C).toFixed(3)):'');
    setText(formPdf,'11_QA',A?numberText(A):'');
    setText(formPdf,'11_QB',B?numberText(B):'');
    setText(formPdf,'11_QC',C?numberText(C):'');
-   setText(formPdf,'11_QDE',E?numberText(E):'');
+   setText(formPdf,'11_Denom',d.fluideChargeChangement);
+   setText(formPdf,'11_QDE',(D+E)?numberText((D+E).toFixed(3)):'');
+   setText(formPdf,'11_QD',D?numberText(D):'');
+   setText(formPdf,'11_BSFF',d.numeroBSFF);
    setText(formPdf,'11_QE',E?numberText(E):'');
+   setText(formPdf,'11_Contenant_ID',d.contenantsId);
+
+   // 12 - ADR / déchets
+   const adr=d.adr||[];
+   check(formPdf,'Case_12_UN1078',adr.includes('UN1078'));
+   check(formPdf,'Case_12_Autre140601',adr.includes('AUTRE_NON_INFLAMMABLE'));
+   setText(formPdf,'Autre-FF-NON-inflammable',d.autreNonInflammable);
+   check(formPdf,'Case_12_UN3161',adr.includes('UN3161'));
+   check(formPdf,'Case_12_Autre160504',adr.includes('AUTRE_INFLAMMABLE'));
+   setText(formPdf,'Autre-FF-inflammable',d.autreInflammable);
+
+   // 13 - destination
+   setText(formPdf,'13_Instal',d.installationDestination);
    setText(formPdf,'14_Observations',d.observations);
 
    setText(formPdf,'Sign_Operateur_Nom',s.technicienNom);
@@ -420,7 +520,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.2.0').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.3.0').catch(console.error))}
 
 
 function showPlatformNote(){
@@ -430,3 +530,10 @@ function showPlatformNote(){
  }
 }
 window.addEventListener('load',()=>setTimeout(showPlatformNote,800));
+
+$('#teqCO2').addEventListener('input',()=>{$('#teqCO2').dataset.manual='1';periodicity()});
+$('#fluide').addEventListener('change',()=>{$('#teqCO2').dataset.manual='';autoTeqCO2();periodicity()});
+$('#chargeTotale').addEventListener('input',()=>{if(!$('#teqCO2').dataset.manual)autoTeqCO2();periodicity()});
+$$('input[name="systemePermanent"]').forEach(x=>x.addEventListener('change',periodicity));
+$('#familleFluide').addEventListener('change',periodicity);
+$('#frequenceControle').addEventListener('change',periodicity);

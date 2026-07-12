@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#174a68">
   <title>EXBRAYAT PRO - Fluides</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=0.2.0">
+  <link rel="stylesheet" href="style.css?v=0.3.0">
 </head>
 <body>
 <header class="topbar">
@@ -14,7 +14,7 @@
     <h1>EXBRAYAT PRO</h1>
     <p>Interventions fluides frigorigènes</p>
   </div>
-  <span class="version">Version 0.2.0 PDF</span>
+  <span class="version">Version 0.3.0 CERFA complet</span>
 </header>
 
 <nav class="tabs" aria-label="Navigation">
@@ -63,6 +63,10 @@
       </label>
       <label>Charge totale (kg)
         <input id="chargeTotale" name="chargeTotale" type="number" step="0.001" inputmode="decimal">
+      </label>
+      <label>Tonnage équivalent CO₂
+        <input id="teqCO2" name="teqCO2" type="number" step="0.001" inputmode="decimal">
+        <small>Calculé automatiquement, mais modifiable.</small>
       </label>
       <label>Localisation de l'équipement
         <input id="equipLocalisation" name="equipLocalisation">
@@ -142,13 +146,89 @@
   </section>
 
   <section class="card">
-    <h2>4. Fluides et observations</h2>
-    <div class="grid four">
-      <label>Fluide vierge chargé (kg)<input name="fluideVierge" type="number" step="0.001" inputmode="decimal"></label>
-      <label>Fluide recyclé chargé (kg)<input name="fluideRecycle" type="number" step="0.001" inputmode="decimal"></label>
-      <label>Fluide régénéré chargé (kg)<input name="fluideRegenere" type="number" step="0.001" inputmode="decimal"></label>
-      <label>Fluide récupéré (kg)<input name="fluideRecupere" type="number" step="0.001" inputmode="decimal"></label>
+    <h2>4. Contrôle d'étanchéité - rubriques 6 à 10</h2>
+
+    <h3>6. Système permanent de détection de fuites</h3>
+    <div class="radio-row">
+      <label><input type="radio" name="systemePermanent" value="oui"> Oui</label>
+      <label><input type="radio" name="systemePermanent" value="non" checked> Non</label>
     </div>
+
+    <h3>7 à 9. Catégorie et fréquence du contrôle</h3>
+    <div class="grid two">
+      <label>Famille de fluide
+        <select name="familleFluide" id="familleFluide">
+          <option value="HFC">HFC / PFC</option>
+          <option value="HFO">HFO</option>
+          <option value="HCFC">HCFC</option>
+        </select>
+      </label>
+      <label>Fréquence minimale retenue
+        <select name="frequenceControle" id="frequenceControle">
+          <option value="">Calcul automatique</option>
+          <option value="3m">3 mois</option>
+          <option value="6m">6 mois</option>
+          <option value="12m">12 mois</option>
+          <option value="24m">24 mois</option>
+        </select>
+      </label>
+    </div>
+    <p id="periodiciteInfo" class="status-info">La fréquence sera calculée selon la charge, le t.éq.CO₂ et la présence d'un système permanent.</p>
+
+    <h3>10. Fuites constatées</h3>
+    <div class="radio-row">
+      <label><input type="radio" name="fuiteConstatee" value="oui"> Oui</label>
+      <label><input type="radio" name="fuiteConstatee" value="non" checked> Non</label>
+    </div>
+    <div class="leak-table">
+      <div class="leak-head">N°</div><div class="leak-head">Localisation de la fuite</div><div class="leak-head">Réparation</div>
+      <div>1</div><input name="fuiteLoca1" aria-label="Localisation fuite 1">
+      <select name="fuiteRep1"><option value="">-</option><option value="realisee">Réalisée</option><option value="afaire">À faire</option></select>
+      <div>2</div><input name="fuiteLoca2" aria-label="Localisation fuite 2">
+      <select name="fuiteRep2"><option value="">-</option><option value="realisee">Réalisée</option><option value="afaire">À faire</option></select>
+      <div>3</div><input name="fuiteLoca3" aria-label="Localisation fuite 3">
+      <select name="fuiteRep3"><option value="">-</option><option value="realisee">Réalisée</option><option value="afaire">À faire</option></select>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>5. Manipulation du fluide - rubrique 11</h2>
+    <div class="grid four">
+      <label>A - Fluide vierge chargé (kg)<input name="fluideVierge" type="number" step="0.001" inputmode="decimal"></label>
+      <label>B - Fluide recyclé chargé (kg)<input name="fluideRecycle" type="number" step="0.001" inputmode="decimal"></label>
+      <label>C - Fluide régénéré chargé (kg)<input name="fluideRegenere" type="number" step="0.001" inputmode="decimal"></label>
+      <label>Total chargé A+B+C (kg)<input id="totalChargeManip" readonly></label>
+
+      <label>D - Fluide destiné au traitement (kg)<input name="fluideTraitement" type="number" step="0.001" inputmode="decimal"></label>
+      <label>E - Fluide conservé pour réutilisation (kg)<input name="fluideReutilisation" type="number" step="0.001" inputmode="decimal"></label>
+      <label>Total récupéré D+E (kg)<input id="totalRecupereManip" readonly></label>
+      <label>N° BSFF Trackdéchets<input name="numeroBSFF"></label>
+
+      <label class="span2">Dénomination du fluide chargé si changement<input name="fluideChargeChangement"></label>
+      <label class="span2">Identification du ou des contenants<input name="contenantsId"></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6. Transport, déchets et destination - rubriques 12 et 13</h2>
+    <h3>12. Dénomination ADR/RID</h3>
+    <div class="checks">
+      <label><input type="checkbox" name="adr" value="UN1078"> UN 1078 - Déchet gaz frigorifique non inflammable</label>
+      <label><input type="checkbox" name="adr" value="AUTRE_NON_INFLAMMABLE"> Autre fluide non inflammable</label>
+      <label><input type="checkbox" name="adr" value="UN3161"> UN 3161 - Déchet gaz liquéfié inflammable</label>
+      <label><input type="checkbox" name="adr" value="AUTRE_INFLAMMABLE"> Autre fluide inflammable</label>
+    </div>
+    <div class="grid two">
+      <label>Précision autre fluide non inflammable<input name="autreNonInflammable"></label>
+      <label>Précision autre fluide inflammable<input name="autreInflammable"></label>
+      <label class="span2">13. Installation prévue de destination du fluide récupéré (nom, SIRET, adresse)
+        <textarea name="installationDestination" rows="3"></textarea>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>7. Observations</h2>
     <label>Observations
       <textarea name="observations" rows="5"></textarea>
     </label>
@@ -212,7 +292,7 @@
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="pdf-lib.min.js?v=0.2.0"></script>
-<script src="app.js?v=0.2.0"></script>
+<script src="pdf-lib.min.js?v=0.3.0"></script>
+<script src="app.js?v=0.3.0"></script>
 </body>
 </html>

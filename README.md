@@ -1,11 +1,13 @@
-# EXBRAYAT PRO - Fluides v0.2.0
+# EXBRAYAT PRO - Fluides v0.3.0
 
-Nouveautés :
-- génération d'un vrai rapport PDF ;
-- remplissage du CERFA officiel 15497*04 ;
-- signatures intégrées au CERFA ;
-- attestation de capacité ajoutée en deuxième page ;
-- création locale sur iPad, sans serveur ;
-- fonctionnement hors connexion après première ouverture.
+Cette version complète le CERFA officiel :
+- tonnage équivalent CO2 ;
+- rubrique 6 : système permanent de détection ;
+- rubriques 7, 8 et 9 : seuils et périodicités ;
+- rubrique 10 : fuites et réparations ;
+- rubrique 11 : détail complet des fluides chargés et récupérés ;
+- rubrique 12 : ADR et déchets ;
+- rubrique 13 : installation de destination ;
+- attestation de capacité ajoutée à la suite du CERFA.
 
-Déposer tous les fichiers à la racine du dépôt GitHub.
+Le t.éq.CO2 est calculé automatiquement pour les fluides courants mais reste modifiable.
