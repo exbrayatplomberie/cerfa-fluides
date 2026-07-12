@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.0-rapport-corrige';
+const VERSION='0.4.2-rapport-corrige';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -300,50 +300,65 @@ async function createReportPdf(){
  const pdf=await PDFDocument.create();
  const font=await pdf.embedFont(StandardFonts.Helvetica);
  const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
- let page=pdf.addPage([595.28,841.89]), y=805;
+ let page=pdf.addPage([595.28,841.89]);
 
- page.drawText('EXBRAYAT PRO - RAPPORT D’INTERVENTION',{x:32,y,size:17,font:bold,color:rgb(.09,.29,.41)});
- page.drawText(`Fiche ${cleanText(d.ficheNo)} - ${formatDateFr(d.dateIntervention)}`,{x:32,y:y-23,size:11,font});
- page.drawText(cleanText(s.entrepriseNom),{x:330,y,size:9,font:bold});
- page.drawText(cleanText(s.entrepriseAdresse),{x:330,y:y-13,size:8,font});
- page.drawText(`SIRET : ${cleanText(s.entrepriseSiret)}`,{x:330,y:y-26,size:8,font});
- y-=58;
+ // Bandeau titre séparé
+ page.drawRectangle({x:0,y:776,width:595.28,height:66,color:rgb(.09,.29,.41)});
+ page.drawText("RAPPORT D'INTERVENTION",{x:170,y:808,size:19,font:bold,color:rgb(1,1,1)});
+ page.drawText(`Fiche ${cleanText(d.ficheNo)} - ${formatDateFr(d.dateIntervention)}`,{x:170,y:786,size:10,font,color:rgb(1,1,1)});
+
+ // Logo à gauche
+ try{
+   const logoBytes=await fetchBytes('logo-exbrayat.png');
+   const logo=await pdf.embedPng(logoBytes);
+   page.drawImage(logo,{x:30,y:646,width:118,height:110});
+ }catch(_){}
+
+ // Coordonnées dans un bloc séparé sous le titre
+ page.drawText(cleanText(s.entrepriseNom),{x:175,y:735,size:11,font:bold,color:rgb(.09,.29,.41)});
+ page.drawText(cleanText(s.entrepriseAdresse),{x:175,y:715,size:9,font});
+ page.drawText('Tel. 06 17 16 15 38',{x:175,y:697,size:9,font});
+ page.drawText('ent.exbrayat@gmail.com',{x:175,y:679,size:9,font});
+ page.drawText(`SIRET : ${cleanText(s.entrepriseSiret)}`,{x:175,y:661,size:9,font});
+ page.drawLine({start:{x:32,y:632},end:{x:563,y:632},thickness:1,color:rgb(.75,.82,.86)});
+
+ let y=608;
 
  y=drawSection(page,bold,'CLIENT ET EQUIPEMENT',y);
  y=drawRows(page,font,bold,[
-  ['Client',d.clientNom],['Téléphone',d.clientTel],
-  ['Adresse',d.clientAdresse],['Équipement',`${d.equipMarque||''} ${d.equipModele||''}`],
-  ['N° de série',d.equipSerie],['Localisation',d.equipLocalisation],
+  ['Client',d.clientNom],['Telephone',d.clientTel],
+  ['Adresse',d.clientAdresse],['Equipement',`${d.equipMarque||''} ${d.equipModele||''}`],
+  ['No de serie',d.equipSerie],['Localisation',d.equipLocalisation],
   ['Fluide',d.fluide],['Charge totale',d.chargeTotale?`${numberText(d.chargeTotale)} kg`:'']
  ],y);
 
  y=drawSection(page,bold,'INTERVENTION ET CONTROLES',y);
  const nature=(d.nature||[]).join(', ');
  const controls=(d.controle||[]).join(', ');
- y=drawLabelValue(page,font,bold,'Nature de l’intervention',nature,32,y,531)-8;
- y=drawLabelValue(page,font,bold,'Contrôles réalisés',controls,32,y,531)-8;
+ y=drawLabelValue(page,font,bold,"Nature de l'intervention",nature,32,y,531)-8;
+ y=drawLabelValue(page,font,bold,'Controles realises',controls,32,y,531)-8;
  y=drawRows(page,font,bold,[
-  ['Détecteur',d.detecteurId],['Contrôlé le',formatDateFr(d.detecteurDate)]
+  ['Detecteur',d.detecteurId],['Controle le',formatDateFr(d.detecteurDate)]
  ],y);
 
  if(y<290){page=pdf.addPage([595.28,841.89]);y=805}
  y=drawSection(page,bold,'MESURES TECHNIQUES',y);
  const measures=[
   ['Tension',d.tension?`${numberText(d.tension)} V`:'' ],
-  ['Intensité totale',d.intensiteTotale?`${numberText(d.intensiteTotale)} A`:'' ],
-  ['Intensité compresseur',d.intensiteComp?`${numberText(d.intensiteComp)} A`:'' ],
-  ['Fréquence',d.frequence?`${numberText(d.frequence)} Hz`:'' ],
+  ['Intensite totale',d.intensiteTotale?`${numberText(d.intensiteTotale)} A`:'' ],
+  ['Intensite compresseur',d.intensiteComp?`${numberText(d.intensiteComp)} A`:'' ],
+  ['Frequence',d.frequence?`${numberText(d.frequence)} Hz`:'' ],
   ['Pression BP',d.pressionBP?`${numberText(d.pressionBP)} bar`:'' ],
   ['Pression HP',d.pressionHP?`${numberText(d.pressionHP)} bar`:'' ],
-  ['T° aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],
-  ['T° refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
-  ['T° liquide',d.tempLiquide?`${numberText(d.tempLiquide)} °C`:'' ],
+  ['Temp. aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} C`:'' ],
+  ['Temp. refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} C`:'' ],
+  ['Temp. liquide',d.tempLiquide?`${numberText(d.tempLiquide)} C`:'' ],
   ['Surchauffe',d.surchauffe?`${numberText(d.surchauffe)} K`:'' ],
   ['Sous-refroidissement',d.sousRefroidissement?`${numberText(d.sousRefroidissement)} K`:'' ],
-  ['Air repris / soufflé',`${numberText(d.airRepris)} / ${numberText(d.airSouffle)} °C`],
+  ['Air repris / souffle',`${numberText(d.airRepris)} / ${numberText(d.airSouffle)} C`],
   ['Delta T air',d.deltaAir?`${numberText(d.deltaAir)} K`:'' ],
-  ['Air extérieur',d.airExterieur?`${numberText(d.airExterieur)} °C`:'' ],
-  ['Départ / retour eau',`${numberText(d.departEau)} / ${numberText(d.retourEau)} °C`],
+  ['Air exterieur',d.airExterieur?`${numberText(d.airExterieur)} C`:'' ],
+  ['Depart / retour eau',`${numberText(d.departEau)} / ${numberText(d.retourEau)} C`],
   ['Delta T eau',d.deltaEau?`${numberText(d.deltaEau)} K`:'' ]
  ];
  y=drawRows(page,font,bold,measures,y);
@@ -351,12 +366,12 @@ async function createReportPdf(){
  if(y<250){page=pdf.addPage([595.28,841.89]);y=805}
  y=drawSection(page,bold,'FLUIDES ET OBSERVATIONS',y);
  y=drawRows(page,font,bold,[
-  ['Fluide vierge chargé',d.fluideVierge?`${numberText(d.fluideVierge)} kg`:'' ],
-  ['Fluide recyclé chargé',d.fluideRecycle?`${numberText(d.fluideRecycle)} kg`:'' ],
-  ['Fluide régénéré chargé',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
-  ['Destiné au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
-  ['Conservé pour réutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
-  ['N° BSFF',d.numeroBSFF],
+  ['Fluide vierge charge',d.fluideVierge?`${numberText(d.fluideVierge)} kg`:'' ],
+  ['Fluide recycle charge',d.fluideRecycle?`${numberText(d.fluideRecycle)} kg`:'' ],
+  ['Fluide regenere charge',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
+  ['Destine au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
+  ['Conserve pour reutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
+  ['No BSFF',d.numeroBSFF],
   ['Contenants',d.contenantsId],
   ['Destination',d.installationDestination]
  ],y);
@@ -377,7 +392,7 @@ async function createReportPdf(){
 
  const bytes=await pdf.save();
  downloadBytes(bytes,`${d.ficheNo}_${safeName(d.clientNom)}_rapport.pdf`);
- toast('Rapport PDF créé');
+ toast('Rapport PDF cree');
 }
 function setText(formPdf,name,value){
  try{formPdf.getTextField(name).setText(cleanText(value))}catch(_){}
@@ -626,7 +641,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.0r').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2').catch(console.error))}
 
 
 function showPlatformNote(){

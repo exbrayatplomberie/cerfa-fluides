@@ -1,6 +1,6 @@
-# EXBRAYAT PRO v0.4.0 - Rapport corrigé
+# EXBRAYAT PRO v0.4.2
 
-- Sans verrouillage.
-- Titre dans un bandeau séparé.
-- Coordonnées sous le titre.
-- Aucun chevauchement dans le rapport PDF.
+- Correction du bouton Rapport PDF seul.
+- Titre dans un bandeau indépendant.
+- Logo et coordonnées placés sous le titre.
+- Aucun chevauchement possible.
