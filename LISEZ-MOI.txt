@@ -1,0 +1,10 @@
+CERFA FLUIDES - EXBRAYAT
+
+1. Cette application fonctionne dans Safari, Chrome ou Firefox.
+2. Pour une installation sur iPad, le dossier doit être publié sur un hébergement HTTPS.
+3. Ouvrir ensuite le lien dans Safari > Partager > Ajouter à l'écran d'accueil.
+4. Après la première ouverture, l'application fonctionne hors connexion.
+5. Les données sont stockées localement sur l'appareil : faire régulièrement une sauvegarde depuis l'onglet Entreprise.
+6. Le PDF se crée par la fonction Imprimer de Safari. Sur iPad, écarter deux doigts sur l'aperçu d'impression puis Partager > Enregistrer dans Fichiers.
+
+Référence réglementaire intégrée : CERFA 15497*04.

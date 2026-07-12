@@ -1,0 +1,1 @@
+Version V5 : ajout d'une date de contrôle du détecteur indépendante de la date d'intervention. Préremplie au 01/07/2025 et facilement modifiable.
