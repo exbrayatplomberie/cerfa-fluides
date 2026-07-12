@@ -1,22 +1,16 @@
-INSTALLATION SUR IPAD — CERFA FLUIDES EXBRAYAT
+CERFA FLUIDES EXBRAYAT - VERSION 3
 
-IMPORTANT : l’application doit être publiée sur une adresse commençant par https://.
-Un fichier HTML ouvert directement sur l’iPad sera bloqué par Safari pour des raisons de sécurité.
+Cette version contient :
+- la fiche d'intervention détaillée ;
+- le CERFA officiel 15497*04 rempli automatiquement ;
+- les signatures client et technicien ;
+- l'attestation de capacité SOCOTEC ajoutée en page 2 du PDF officiel ;
+- le fonctionnement hors connexion après installation.
 
-MÉTHODE LA PLUS SIMPLE DE PUBLICATION
-1. Depuis un ordinateur, ouvre le service d’hébergement statique de ton choix.
-2. Dépose le contenu du fichier ZIP « cerfa-fluides-exbrayat-a-publier.zip ».
-3. Le service te donnera une adresse HTTPS publique.
-4. Ouvre cette adresse sur l’iPad avec Safari.
-5. Touche Partager > Ajouter à l’écran d’accueil > Ajouter.
-6. Ouvre ensuite l’icône « CERFA Fluides ».
-7. Dans Entreprise, renseigne puis enregistre les coordonnées et l’attestation de capacité.
-8. Fais un essai de signature, de photo et de création PDF.
-
-UTILISATION HORS CONNEXION
-Après une première ouverture avec Internet, l’application reste disponible sans réseau depuis son icône.
-Les fiches, clients, photos et signatures restent enregistrés dans Safari sur cet iPad.
-Utilise régulièrement Entreprise > Sauvegarder les données.
-
-CRÉER LE PDF SUR IPAD
-Créer le PDF > Imprimer / Enregistrer en PDF > écarter deux doigts sur l’aperçu > Partager > Enregistrer dans Fichiers ou Mail.
+MISE A JOUR GITHUB
+1. Ouvrir le dépôt cerfa-fluides.
+2. Add file > Upload files.
+3. Déposer TOUS les fichiers de ce dossier et confirmer le remplacement.
+4. Commit changes.
+5. Attendre 1 à 3 minutes, puis recharger l'application.
+6. Sur iPad, supprimer l'ancienne icône puis ajouter à nouveau le site à l'écran d'accueil si la mise à jour ne s'affiche pas.
