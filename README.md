@@ -1,9 +1,6 @@
-# EXBRAYAT PRO v0.4.2.1 Stable
+# EXBRAYAT PRO v0.4.2
 
-Base : version 0.4.2 fonctionnelle.
-
-Correction unique :
-- erreur WinAnsi du bouton Dossier client complet ;
-- signatures conservées ;
-- boutons conservés ;
-- rapport corrigé conservé.
+- Correction du bouton Rapport PDF seul.
+- Titre dans un bandeau indépendant.
+- Logo et coordonnées placés sous le titre.
+- Aucun chevauchement possible.

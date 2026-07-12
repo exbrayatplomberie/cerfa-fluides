@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.2.1-stable';
+const VERSION='0.4.2-rapport-corrige';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -415,7 +415,7 @@ async function createCompleteDossierPdf(){
 
    // En-tête séparé : le titre ne peut plus chevaucher les coordonnées.
    page.drawRectangle({x:0,y:775,width:595.28,height:66,color:rgb(.09,.29,.41)});
-   page.drawText('RAPPORT D'INTERVENTION',{x:180,y:805,size:18,font:bold,color:rgb(1,1,1)});
+   page.drawText('RAPPORT D’INTERVENTION',{x:180,y:805,size:18,font:bold,color:rgb(1,1,1)});
    page.drawText(`Fiche ${cleanText(d.ficheNo)} - ${formatDateFr(d.dateIntervention)}`,{x:180,y:785,size:10,font,color:rgb(1,1,1)});
 
    try{
@@ -426,7 +426,7 @@ async function createCompleteDossierPdf(){
 
    page.drawText(cleanText(s.entrepriseNom),{x:175,y:735,size:11,font:bold,color:rgb(.09,.29,.41)});
    page.drawText(cleanText(s.entrepriseAdresse),{x:175,y:716,size:9,font});
-   page.drawText('Tel. 06 17 16 15 38',{x:175,y:699,size:9,font});
+   page.drawText('Tél. 06 17 16 15 38',{x:175,y:699,size:9,font});
    page.drawText('ent.exbrayat@gmail.com',{x:175,y:683,size:9,font});
    page.drawText(`SIRET : ${cleanText(s.entrepriseSiret)}`,{x:175,y:667,size:9,font});
    page.drawLine({start:{x:32,y:638},end:{x:563,y:638},thickness:1,color:rgb(.75,.82,.86)});
@@ -436,16 +436,16 @@ async function createCompleteDossierPdf(){
    y=drawRows(page,font,bold,[
      ['Client',d.clientNom],['Téléphone',d.clientTel],
      ['E-mail',d.clientEmail],['Adresse',d.clientAdresse],
-     ['Equipement',`${d.equipMarque||''} ${d.equipModele||''}`],['No de série',d.equipSerie],
+     ['Équipement',`${d.equipMarque||''} ${d.equipModele||''}`],['N° de série',d.equipSerie],
      ['Localisation',d.equipLocalisation],['Fluide',d.fluide],
      ['Charge totale',d.chargeTotale?`${numberText(d.chargeTotale)} kg`:'' ],
-     ['Tonnage équivalent CO2',d.teqCO2?`${numberText(d.teqCO2)} t.éq.CO2`:'' ]
+     ['Tonnage équivalent CO₂',d.teqCO2?`${numberText(d.teqCO2)} t.éq.CO₂`:'' ]
    ],y);
 
    y=drawSection(page,bold,'INTERVENTION ET CONTROLES',y);
-   y=drawLabelValue(page,font,bold,'Nature de l'intervention',(d.nature||[]).join(', '),32,y,531)-8;
-   y=drawLabelValue(page,font,bold,'Contrôles realises',(d.controle||[]).join(', '),32,y,531)-8;
-   y=drawRows(page,font,bold,[['Detecteur',d.detecteurId],['Controle le',formatDateFr(d.detecteurDate)]],y);
+   y=drawLabelValue(page,font,bold,'Nature de l’intervention',(d.nature||[]).join(', '),32,y,531)-8;
+   y=drawLabelValue(page,font,bold,'Contrôles réalisés',(d.controle||[]).join(', '),32,y,531)-8;
+   y=drawRows(page,font,bold,[['Détecteur',d.detecteurId],['Contrôlé le',formatDateFr(d.detecteurDate)]],y);
 
    page=finalPdf.addPage([595.28,841.89]);
    page.drawRectangle({x:0,y:790,width:595.28,height:51,color:rgb(.09,.29,.41)});
@@ -456,7 +456,7 @@ async function createCompleteDossierPdf(){
      ['Tension',d.tension?`${numberText(d.tension)} V`:'' ],['Intensité totale',d.intensiteTotale?`${numberText(d.intensiteTotale)} A`:'' ],
      ['Intensité compresseur',d.intensiteComp?`${numberText(d.intensiteComp)} A`:'' ],['Fréquence',d.frequence?`${numberText(d.frequence)} Hz`:'' ],
      ['Pression BP',d.pressionBP?`${numberText(d.pressionBP)} bar`:'' ],['Pression HP',d.pressionHP?`${numberText(d.pressionHP)} bar`:'' ],
-     ['Temp.  aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],['Temp.  refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
+     ['T° aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],['T° refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
      ['Surchauffe',d.surchauffe?`${numberText(d.surchauffe)} K`:'' ],['Sous-refroidissement',d.sousRefroidissement?`${numberText(d.sousRefroidissement)} K`:'' ],
      ['Air repris / soufflé',`${numberText(d.airRepris)} / ${numberText(d.airSouffle)} °C`],['Delta T air',d.deltaAir?`${numberText(d.deltaAir)} K`:'' ],
      ['Départ / retour eau',`${numberText(d.departEau)} / ${numberText(d.retourEau)} °C`],['Delta T eau',d.deltaEau?`${numberText(d.deltaEau)} K`:'' ]
@@ -464,12 +464,12 @@ async function createCompleteDossierPdf(){
 
    y=drawSection(page,bold,'FLUIDES ET OBSERVATIONS',y);
    y=drawRows(page,font,bold,[
-     ['Fluide vierge charge',d.fluideVierge?`${numberText(d.fluideVierge)} kg`:'' ],
-     ['Fluide recyclé charge',d.fluideRecycle?`${numberText(d.fluideRecycle)} kg`:'' ],
-     ['Fluide regenere charge',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
+     ['Fluide vierge chargé',d.fluideVierge?`${numberText(d.fluideVierge)} kg`:'' ],
+     ['Fluide recyclé chargé',d.fluideRecycle?`${numberText(d.fluideRecycle)} kg`:'' ],
+     ['Fluide régénéré chargé',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
      ['Destiné au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
-     ['Conservé pour reutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
-     ['No BSFF',d.numeroBSFF],['Contenants',d.contenantsId],['Destination',d.installationDestination]
+     ['Conservé pour réutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
+     ['N° BSFF',d.numeroBSFF],['Contenants',d.contenantsId],['Destination',d.installationDestination]
    ],y);
    y=drawLabelValue(page,font,bold,'Observations',d.observations,32,y,531)-12;
 
@@ -498,7 +498,7 @@ async function createCompleteDossierPdf(){
 
    const bytes=await finalPdf.save();
    downloadBytes(bytes,`${d.dateIntervention}_${safeName(d.clientNom)}_${d.ficheNo}_DOSSIER_COMPLET.pdf`);
-   toast('Dossier client complet cree');
+   toast('Dossier client complet créé');
  }catch(err){
    console.error(err);
    alert('Impossible de créer le dossier complet : '+err.message);
@@ -641,7 +641,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.1').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2').catch(console.error))}
 
 
 function showPlatformNote(){
