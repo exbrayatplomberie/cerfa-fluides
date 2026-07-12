@@ -1,3 +1,6 @@
-# EXBRAYAT PRO v0.4.1.1
+# EXBRAYAT PRO v0.4.0 - Rapport corrigé
 
-Verrouillage local simple et compatible iPad.
+- Sans verrouillage.
+- Titre dans un bandeau séparé.
+- Coordonnées sous le titre.
+- Aucun chevauchement dans le rapport PDF.

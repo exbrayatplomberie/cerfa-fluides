@@ -1,5 +1,5 @@
 {
-  "name": "EXBRAYAT PRO - Verrouillage simple",
+  "name": "EXBRAYAT PRO - Dossier complet",
   "short_name": "EXBRAYAT PRO",
   "start_url": "./index.html",
   "scope": "./",
@@ -15,5 +15,5 @@
       "purpose": "any maskable"
     }
   ],
-  "version": "0.4.1.1"
+  "version": "0.4.0"
 }

@@ -6,29 +6,16 @@
   <meta name="theme-color" content="#174a68">
   <title>EXBRAYAT PRO - Fluides</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=0.4.1.1">
+  <link rel="stylesheet" href="style.css?v=0.4.0r">
 </head>
-<body class="locked">
-
-<div id="lockScreen" class="lock-screen">
-  <div class="lock-card">
-    <img src="logo-exbrayat.png" alt="Logo Exbrayat" class="lock-logo">
-    <h1>EXBRAYAT PRO</h1>
-    <p>Application verrouillée</p>
-    <label for="pinInput">Code à 6 chiffres</label>
-    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
-    <button id="unlockBtn" type="button">Déverrouiller</button>
-    <p id="lockMessage" class="lock-message"></p>
-  </div>
-</div>
-
+<body>
 <header class="topbar">
   <img src="logo-exbrayat.png" alt="Logo Exbrayat" class="app-logo">
   <div>
     <h1>EXBRAYAT PRO</h1>
     <p>Interventions fluides frigorigènes</p>
   </div>
-  <span class="version">Version 0.4.1.1 Verrouillage simple</span>
+  <span class="version">Version 0.4.0 Rapport corrigé</span>
 </header>
 
 <nav class="tabs" aria-label="Navigation">
@@ -306,17 +293,11 @@
       <a href="attestation-capacite.pdf" target="_blank">Voir l'attestation de capacité</a>
     </div>
   </section>
-
-  <section class="card">
-    <h2>Sécurité</h2>
-    <button type="button" id="lockNowBtn" class="secondary">Verrouiller maintenant</button>
-  </section>
-
 </section>
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="pdf-lib.min.js?v=0.4.1.1"></script>
-<script src="app.js?v=0.4.1.1"></script>
+<script src="pdf-lib.min.js?v=0.4.0r"></script>
+<script src="app.js?v=0.4.0r"></script>
 </body>
 </html>

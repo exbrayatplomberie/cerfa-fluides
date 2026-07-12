@@ -1,47 +1,8 @@
 
 'use strict';
-const VERSION='0.4.1.1-verrouillage-simple';
+const VERSION='0.4.0-rapport-corrige';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
-
-const LOCAL_PIN = ['0','3','6','9','1','2'].join('');
-
-function lockApp(){
-  sessionStorage.removeItem('exbrayat_unlocked');
-  document.body.classList.add('locked');
-  const screen=document.getElementById('lockScreen');
-  screen.classList.remove('hidden');
-  const input=document.getElementById('pinInput');
-  input.value='';
-  document.getElementById('lockMessage').textContent='';
-  setTimeout(()=>input.focus(),150);
-}
-
-function unlockApp(){
-  sessionStorage.setItem('exbrayat_unlocked','1');
-  document.body.classList.remove('locked');
-  document.getElementById('lockScreen').classList.add('hidden');
-}
-
-function handleUnlock(){
-  const input=document.getElementById('pinInput');
-  const msg=document.getElementById('lockMessage');
-  const value=(input.value||'').replace(/\D/g,'').slice(0,6);
-  input.value=value;
-  if(value.length!==6){
-    msg.textContent='Saisissez 6 chiffres.';
-    return;
-  }
-  if(value===LOCAL_PIN){
-    msg.textContent='';
-    unlockApp();
-  }else{
-    msg.textContent='Code incorrect.';
-    input.value='';
-    setTimeout(()=>input.focus(),100);
-  }
-}
-
 const form=document.getElementById('intervention-form');
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -663,23 +624,9 @@ $('#printBtn').onclick=()=>{saveDossier();setTimeout(()=>window.print(),350)};
 $('#newBtn').onclick=newForm;
 $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
-
-const unlockButton=document.getElementById('unlockBtn');
-const pinField=document.getElementById('pinInput');
-const lockButton=document.getElementById('lockNowBtn');
-
-unlockButton.onclick=handleUnlock;
-pinField.oninput=()=>{pinField.value=pinField.value.replace(/\D/g,'').slice(0,6)};
-pinField.onkeydown=e=>{if(e.key==='Enter')handleUnlock()};
-if(lockButton)lockButton.onclick=lockApp;
-
-if(sessionStorage.getItem('exbrayat_unlocked')==='1')unlockApp();
-else lockApp();
-
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.1.1').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.0r').catch(console.error))}
 
 
 function showPlatformNote(){
