@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.3-dossier-complet-corrige';
+const VERSION='0.4.2.1-stable';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -66,7 +66,7 @@ function fillForm(d){
  });
  ['nature','controle','adr'].forEach(n=>$$(`input[name="${n}"]`).forEach(x=>x.checked=(d[n]||[]).includes(x.value)));
  setSignature('signatureTechnicien',d.signatureTechnicien);setSignature('signatureClient',d.signatureClient);
- calculate();switchPage('intervention');toast(`Fiche ${d.ficheNo} chargee`);
+ calculate();switchPage('intervention');toast(`Fiche ${d.ficheNo} chargée`);
 }
 function newForm(){
  if(!confirm('Effacer la fiche en cours ?'))return;
@@ -119,9 +119,9 @@ function periodicity(){
    else if(charge>=10){threshold='HFO 10 à < 100 kg';freq=permanent?'12m':'6m'}
    else if(charge>=1){threshold='HFO 1 à < 10 kg';freq=permanent?'24m':'12m'}
  }else{
-   if(teq>=500){threshold='HFC/PFC ≥ 500 t.éq.CO2';freq=permanent?'6m':'3m'}
-   else if(teq>=50){threshold='HFC/PFC 50 à < 500 t.éq.CO2';freq=permanent?'12m':'6m'}
-   else if(teq>=5){threshold='HFC/PFC 5 à < 50 t.éq.CO2';freq=permanent?'24m':'12m'}
+   if(teq>=500){threshold='HFC/PFC ≥ 500 t.éq.CO₂';freq=permanent?'6m':'3m'}
+   else if(teq>=50){threshold='HFC/PFC 50 à < 500 t.éq.CO₂';freq=permanent?'12m':'6m'}
+   else if(teq>=5){threshold='HFC/PFC 5 à < 50 t.éq.CO₂';freq=permanent?'24m':'12m'}
  }
  if(!$('#frequenceControle').value) $('#periodiciteInfo').textContent=threshold?`${threshold} - contrôle tous les ${freq.replace('m',' mois')}`:'Seuil réglementaire non atteint ou données incomplètes.';
  else $('#periodiciteInfo').textContent=`Fréquence sélectionnée manuellement : ${$('#frequenceControle').selectedOptions[0].textContent}`;
@@ -242,23 +242,7 @@ function switchPage(name){$$('.page').forEach(x=>x.classList.toggle('active',x.i
 
 const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
-function cleanText(v){
- return String(v??'')
-   .replace(/₂/g,'2')
-   .replace(/₃/g,'3')
-   .replace(/²/g,'2')
-   .replace(/³/g,'3')
-   .replace(/≤/g,'<=')
-   .replace(/≥/g,'>=')
-   .replace(/[’‘]/g,"'")
-   .replace(/[“”]/g,'"')
-   .replace(/[–—]/g,'-')
-   .replace(/…/g,'...')
-   .replace(/œ/g,'oe')
-   .replace(/Œ/g,'OE')
-   .replace(/\u00A0/g,' ')
-   .trim()
-}
+function cleanText(v){return String(v??'').trim()}
 function formatDateFr(v){
  if(!v)return '';
  const [y,m,d]=v.split('-');
@@ -533,8 +517,8 @@ async function createCerfaPdf(){
    setText(formPdf,'Fiche_no',d.ficheNo);
    setText(formPdf,'Operateur',`${s.entrepriseNom}\n${s.entrepriseAdresse}\nSIRET ${s.entrepriseSiret}`);
    setText(formPdf,'Attestation_no',s.attestationNo);
-   setText(formPdf,'Detenteur',`${d.clientNom}\n${d.clientAdresse}${d.clientTel?`\nTel. ${d.clientTel}`:''}`);
-   setText(formPdf,'Equipement_ID',`${d.equipMarque||''} ${d.equipModele||''} - No série ${d.equipSerie||''} - ${d.equipLocalisation||''}`);
+   setText(formPdf,'Detenteur',`${d.clientNom}\n${d.clientAdresse}${d.clientTel?`\nTél. ${d.clientTel}`:''}`);
+   setText(formPdf,'Equipement_ID',`${d.equipMarque||''} ${d.equipModele||''} - N° série ${d.equipSerie||''} - ${d.equipLocalisation||''}`);
    setText(formPdf,'Equipement_Fluide',d.fluide);
    setText(formPdf,'Equipement_Charge',numberText(d.chargeTotale));
    setText(formPdf,'Equipement_teqCO2',numberText(d.teqCO2));
@@ -636,7 +620,7 @@ async function createCerfaPdf(){
 
    const bytes=await pdf.save();
    downloadBytes(bytes,`${d.ficheNo}_${safeName(d.clientNom)}_CERFA_et_attestation.pdf`);
-   toast('CERFA officiel et attestation crees');
+   toast('CERFA officiel et attestation créés');
  }catch(err){
    console.error(err);
    alert('Impossible de créer le CERFA : '+err.message);
@@ -657,7 +641,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.3').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.1').catch(console.error))}
 
 
 function showPlatformNote(){
