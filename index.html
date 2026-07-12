@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#174a68">
   <title>EXBRAYAT PRO - Fluides</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=0.1.1">
+  <link rel="stylesheet" href="style.css?v=0.2.0">
 </head>
 <body>
 <header class="topbar">
@@ -14,7 +14,7 @@
     <h1>EXBRAYAT PRO</h1>
     <p>Interventions fluides frigorigènes</p>
   </div>
-  <span class="version">Version 0.1.1 iPad</span>
+  <span class="version">Version 0.2.0 PDF</span>
 </header>
 
 <nav class="tabs" aria-label="Navigation">
@@ -172,7 +172,9 @@
 
   <div class="actions sticky">
     <button type="button" id="saveBtn">Enregistrer le dossier</button>
-    <button type="button" id="printBtn" class="secondary">Créer la fiche détaillée</button>
+    <button type="button" id="reportPdfBtn" class="secondary">Télécharger le rapport PDF</button>
+    <button type="button" id="cerfaPdfBtn" class="success">CERFA officiel + attestation</button>
+    <button type="button" id="printBtn" class="secondary">Imprimer la fiche</button>
     <button type="button" id="newBtn" class="danger">Nouvelle fiche</button>
   </div>
 </form>
@@ -210,6 +212,7 @@
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=0.1.1"></script>
+<script src="pdf-lib.min.js?v=0.2.0"></script>
+<script src="app.js?v=0.2.0"></script>
 </body>
 </html>

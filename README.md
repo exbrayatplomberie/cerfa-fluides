@@ -1,15 +1,11 @@
-# EXBRAYAT PRO - Fluides
+# EXBRAYAT PRO - Fluides v0.2.0
 
-Version 0.1.1 iPad
+Nouveautés :
+- génération d'un vrai rapport PDF ;
+- remplissage du CERFA officiel 15497*04 ;
+- signatures intégrées au CERFA ;
+- attestation de capacité ajoutée en deuxième page ;
+- création locale sur iPad, sans serveur ;
+- fonctionnement hors connexion après première ouverture.
 
-Correctifs iPad / Safari :
-- signature tactile et Apple Pencil fiabilisée ;
-- défilement bloqué uniquement pendant la signature ;
-- champs à 16 px pour éviter le zoom automatique ;
-- gros boutons tactiles ;
-- mise en page adaptée portrait et paysage ;
-- cache hors connexion mis à jour ;
-- ancienne version supprimée automatiquement du cache ;
-- impression rendue plus stable sur Safari.
-
-Publier tous les fichiers à la racine du dépôt GitHub.
+Déposer tous les fichiers à la racine du dépôt GitHub.

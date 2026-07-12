@@ -63,3 +63,5 @@ input[type="date"]{-webkit-appearance:auto;appearance:auto}
   .checks label{min-height:50px}
   .tab{min-height:52px}
 }
+
+button.success{background:#176b43}

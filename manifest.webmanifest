@@ -1,5 +1,5 @@
 {
-  "name": "EXBRAYAT PRO - Fluides iPad",
+  "name": "EXBRAYAT PRO - PDF Fluides",
   "short_name": "EXBRAYAT PRO",
   "start_url": "./index.html",
   "scope": "./",
@@ -15,5 +15,5 @@
       "purpose": "any maskable"
     }
   ],
-  "version": "0.1.1"
+  "version": "0.2.0"
 }
