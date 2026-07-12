@@ -1,6 +1,6 @@
-# EXBRAYAT PRO v0.4.2
+# EXBRAYAT PRO v0.4.3
 
-- Correction du bouton Rapport PDF seul.
-- Titre dans un bandeau indépendant.
-- Logo et coordonnées placés sous le titre.
-- Aucun chevauchement possible.
+- Correction du bouton Dossier client complet.
+- Suppression des caractères incompatibles avec WinAnsi.
+- Remplacement de CO²/CO₂ par CO2 dans les PDF.
+- Rapport PDF seul corrigé conservé.
