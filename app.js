@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='5.0.0-stable';
+const VERSION='0.4.1.1-verrouillage-simple';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 
@@ -158,9 +158,9 @@ function periodicity(){
    else if(charge>=10){threshold='HFO 10 à < 100 kg';freq=permanent?'12m':'6m'}
    else if(charge>=1){threshold='HFO 1 à < 10 kg';freq=permanent?'24m':'12m'}
  }else{
-   if(teq>=500){threshold='HFC/PFC ≥ 500 t.eq.CO2';freq=permanent?'6m':'3m'}
-   else if(teq>=50){threshold='HFC/PFC 50 à < 500 t.eq.CO2';freq=permanent?'12m':'6m'}
-   else if(teq>=5){threshold='HFC/PFC 5 à < 50 t.eq.CO2';freq=permanent?'24m':'12m'}
+   if(teq>=500){threshold='HFC/PFC ≥ 500 t.éq.CO₂';freq=permanent?'6m':'3m'}
+   else if(teq>=50){threshold='HFC/PFC 50 à < 500 t.éq.CO₂';freq=permanent?'12m':'6m'}
+   else if(teq>=5){threshold='HFC/PFC 5 à < 50 t.éq.CO₂';freq=permanent?'24m':'12m'}
  }
  if(!$('#frequenceControle').value) $('#periodiciteInfo').textContent=threshold?`${threshold} - contrôle tous les ${freq.replace('m',' mois')}`:'Seuil réglementaire non atteint ou données incomplètes.';
  else $('#periodiciteInfo').textContent=`Fréquence sélectionnée manuellement : ${$('#frequenceControle').selectedOptions[0].textContent}`;
@@ -281,21 +281,7 @@ function switchPage(name){$$('.page').forEach(x=>x.classList.toggle('active',x.i
 
 const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
-function cleanText(v){
- return String(v??'')
-   .replace(/₂/g,'2')
-   .replace(/₃/g,'3')
-   .replace(/≤/g,'<=')
-   .replace(/≥/g,'>=')
-   .replace(/[’‘]/g,"'")
-   .replace(/[“”]/g,'"')
-   .replace(/[–—]/g,'-')
-   .replace(/…/g,'...')
-   .replace(/œ/g,'oe')
-   .replace(/Œ/g,'OE')
-   .replace(/\u00A0/g,' ')
-   .trim()
-}
+function cleanText(v){return String(v??'').trim()}
 function formatDateFr(v){
  if(!v)return '';
  const [y,m,d]=v.split('-');
@@ -355,7 +341,7 @@ async function createReportPdf(){
  const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
  let page=pdf.addPage([595.28,841.89]), y=805;
 
- page.drawText('EXBRAYAT PRO - RAPPORT D'INTERVENTION',{x:32,y,size:17,font:bold,color:rgb(.09,.29,.41)});
+ page.drawText('EXBRAYAT PRO - RAPPORT D’INTERVENTION',{x:32,y,size:17,font:bold,color:rgb(.09,.29,.41)});
  page.drawText(`Fiche ${cleanText(d.ficheNo)} - ${formatDateFr(d.dateIntervention)}`,{x:32,y:y-23,size:11,font});
  page.drawText(cleanText(s.entrepriseNom),{x:330,y,size:9,font:bold});
  page.drawText(cleanText(s.entrepriseAdresse),{x:330,y:y-13,size:8,font});
@@ -365,18 +351,18 @@ async function createReportPdf(){
  y=drawSection(page,bold,'CLIENT ET EQUIPEMENT',y);
  y=drawRows(page,font,bold,[
   ['Client',d.clientNom],['Téléphone',d.clientTel],
-  ['Adresse',d.clientAdresse],['Equipement',`${d.equipMarque||''} ${d.equipModele||''}`],
-  ['No de série',d.equipSerie],['Localisation',d.equipLocalisation],
+  ['Adresse',d.clientAdresse],['Équipement',`${d.equipMarque||''} ${d.equipModele||''}`],
+  ['N° de série',d.equipSerie],['Localisation',d.equipLocalisation],
   ['Fluide',d.fluide],['Charge totale',d.chargeTotale?`${numberText(d.chargeTotale)} kg`:'']
  ],y);
 
  y=drawSection(page,bold,'INTERVENTION ET CONTROLES',y);
  const nature=(d.nature||[]).join(', ');
  const controls=(d.controle||[]).join(', ');
- y=drawLabelValue(page,font,bold,'Nature de l'intervention',nature,32,y,531)-8;
+ y=drawLabelValue(page,font,bold,'Nature de l’intervention',nature,32,y,531)-8;
  y=drawLabelValue(page,font,bold,'Contrôles réalisés',controls,32,y,531)-8;
  y=drawRows(page,font,bold,[
-  ['Detecteur',d.detecteurId],['Controle le',formatDateFr(d.detecteurDate)]
+  ['Détecteur',d.detecteurId],['Contrôlé le',formatDateFr(d.detecteurDate)]
  ],y);
 
  if(y<290){page=pdf.addPage([595.28,841.89]);y=805}
@@ -388,9 +374,9 @@ async function createReportPdf(){
   ['Fréquence',d.frequence?`${numberText(d.frequence)} Hz`:'' ],
   ['Pression BP',d.pressionBP?`${numberText(d.pressionBP)} bar`:'' ],
   ['Pression HP',d.pressionHP?`${numberText(d.pressionHP)} bar`:'' ],
-  ['Temperature  aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],
-  ['Temperature  refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
-  ['Temperature  liquide',d.tempLiquide?`${numberText(d.tempLiquide)} °C`:'' ],
+  ['T° aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],
+  ['T° refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
+  ['T° liquide',d.tempLiquide?`${numberText(d.tempLiquide)} °C`:'' ],
   ['Surchauffe',d.surchauffe?`${numberText(d.surchauffe)} K`:'' ],
   ['Sous-refroidissement',d.sousRefroidissement?`${numberText(d.sousRefroidissement)} K`:'' ],
   ['Air repris / soufflé',`${numberText(d.airRepris)} / ${numberText(d.airSouffle)} °C`],
@@ -409,7 +395,7 @@ async function createReportPdf(){
   ['Fluide régénéré chargé',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
   ['Destiné au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
   ['Conservé pour réutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
-  ['No BSFF',d.numeroBSFF],
+  ['N° BSFF',d.numeroBSFF],
   ['Contenants',d.contenantsId],
   ['Destination',d.installationDestination]
  ],y);
@@ -453,7 +439,7 @@ async function createCompleteDossierPdf(){
 
    // En-tête séparé : le titre ne peut plus chevaucher les coordonnées.
    page.drawRectangle({x:0,y:775,width:595.28,height:66,color:rgb(.09,.29,.41)});
-   page.drawText('RAPPORT D'INTERVENTION',{x:180,y:805,size:18,font:bold,color:rgb(1,1,1)});
+   page.drawText('RAPPORT D’INTERVENTION',{x:180,y:805,size:18,font:bold,color:rgb(1,1,1)});
    page.drawText(`Fiche ${cleanText(d.ficheNo)} - ${formatDateFr(d.dateIntervention)}`,{x:180,y:785,size:10,font,color:rgb(1,1,1)});
 
    try{
@@ -464,7 +450,7 @@ async function createCompleteDossierPdf(){
 
    page.drawText(cleanText(s.entrepriseNom),{x:175,y:735,size:11,font:bold,color:rgb(.09,.29,.41)});
    page.drawText(cleanText(s.entrepriseAdresse),{x:175,y:716,size:9,font});
-   page.drawText('Tel. 06 17 16 15 38',{x:175,y:699,size:9,font});
+   page.drawText('Tél. 06 17 16 15 38',{x:175,y:699,size:9,font});
    page.drawText('ent.exbrayat@gmail.com',{x:175,y:683,size:9,font});
    page.drawText(`SIRET : ${cleanText(s.entrepriseSiret)}`,{x:175,y:667,size:9,font});
    page.drawLine({start:{x:32,y:638},end:{x:563,y:638},thickness:1,color:rgb(.75,.82,.86)});
@@ -474,16 +460,16 @@ async function createCompleteDossierPdf(){
    y=drawRows(page,font,bold,[
      ['Client',d.clientNom],['Téléphone',d.clientTel],
      ['E-mail',d.clientEmail],['Adresse',d.clientAdresse],
-     ['Equipement',`${d.equipMarque||''} ${d.equipModele||''}`],['No de série',d.equipSerie],
+     ['Équipement',`${d.equipMarque||''} ${d.equipModele||''}`],['N° de série',d.equipSerie],
      ['Localisation',d.equipLocalisation],['Fluide',d.fluide],
      ['Charge totale',d.chargeTotale?`${numberText(d.chargeTotale)} kg`:'' ],
-     ['Tonnage equivalent CO2',d.teqCO2?`${numberText(d.teqCO2)} t.eq.CO2`:'' ]
+     ['Tonnage équivalent CO₂',d.teqCO2?`${numberText(d.teqCO2)} t.éq.CO₂`:'' ]
    ],y);
 
    y=drawSection(page,bold,'INTERVENTION ET CONTROLES',y);
-   y=drawLabelValue(page,font,bold,'Nature de l'intervention',(d.nature||[]).join(', '),32,y,531)-8;
+   y=drawLabelValue(page,font,bold,'Nature de l’intervention',(d.nature||[]).join(', '),32,y,531)-8;
    y=drawLabelValue(page,font,bold,'Contrôles réalisés',(d.controle||[]).join(', '),32,y,531)-8;
-   y=drawRows(page,font,bold,[['Detecteur',d.detecteurId],['Controle le',formatDateFr(d.detecteurDate)]],y);
+   y=drawRows(page,font,bold,[['Détecteur',d.detecteurId],['Contrôlé le',formatDateFr(d.detecteurDate)]],y);
 
    page=finalPdf.addPage([595.28,841.89]);
    page.drawRectangle({x:0,y:790,width:595.28,height:51,color:rgb(.09,.29,.41)});
@@ -494,7 +480,7 @@ async function createCompleteDossierPdf(){
      ['Tension',d.tension?`${numberText(d.tension)} V`:'' ],['Intensité totale',d.intensiteTotale?`${numberText(d.intensiteTotale)} A`:'' ],
      ['Intensité compresseur',d.intensiteComp?`${numberText(d.intensiteComp)} A`:'' ],['Fréquence',d.frequence?`${numberText(d.frequence)} Hz`:'' ],
      ['Pression BP',d.pressionBP?`${numberText(d.pressionBP)} bar`:'' ],['Pression HP',d.pressionHP?`${numberText(d.pressionHP)} bar`:'' ],
-     ['Temperature  aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],['Temperature  refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
+     ['T° aspiration',d.tempAspiration?`${numberText(d.tempAspiration)} °C`:'' ],['T° refoulement',d.tempRefoulement?`${numberText(d.tempRefoulement)} °C`:'' ],
      ['Surchauffe',d.surchauffe?`${numberText(d.surchauffe)} K`:'' ],['Sous-refroidissement',d.sousRefroidissement?`${numberText(d.sousRefroidissement)} K`:'' ],
      ['Air repris / soufflé',`${numberText(d.airRepris)} / ${numberText(d.airSouffle)} °C`],['Delta T air',d.deltaAir?`${numberText(d.deltaAir)} K`:'' ],
      ['Départ / retour eau',`${numberText(d.departEau)} / ${numberText(d.retourEau)} °C`],['Delta T eau',d.deltaEau?`${numberText(d.deltaEau)} K`:'' ]
@@ -507,7 +493,7 @@ async function createCompleteDossierPdf(){
      ['Fluide régénéré chargé',d.fluideRegenere?`${numberText(d.fluideRegenere)} kg`:'' ],
      ['Destiné au traitement',d.fluideTraitement?`${numberText(d.fluideTraitement)} kg`:'' ],
      ['Conservé pour réutilisation',d.fluideReutilisation?`${numberText(d.fluideReutilisation)} kg`:'' ],
-     ['No BSFF',d.numeroBSFF],['Contenants',d.contenantsId],['Destination',d.installationDestination]
+     ['N° BSFF',d.numeroBSFF],['Contenants',d.contenantsId],['Destination',d.installationDestination]
    ],y);
    y=drawLabelValue(page,font,bold,'Observations',d.observations,32,y,531)-12;
 
@@ -523,21 +509,27 @@ async function createCompleteDossierPdf(){
      page.drawImage(img,{x:320,y:65,width:220,height:90});
    }
 
-   // CERFA officiel completement rempli, puis attestation.
-   const completedCerfa=await createCerfaPdf(true);
-   const completedPages=await finalPdf.copyPages(completedCerfa,completedCerfa.getPageIndices());
-   completedPages.forEach(pg=>finalPdf.addPage(pg));
+   // Ajout du CERFA officiel puis de l'attestation.
+   const cerfaBytes=await fetchBytes('cerfa_15497-04.pdf');
+   const cerfaPdf=await PDFDocument.load(cerfaBytes);
+   const cerfaPages=await finalPdf.copyPages(cerfaPdf,cerfaPdf.getPageIndices());
+   cerfaPages.forEach(pg=>finalPdf.addPage(pg));
+
+   const attBytes=await fetchBytes('attestation-capacite.pdf');
+   const attPdf=await PDFDocument.load(attBytes);
+   const attPages=await finalPdf.copyPages(attPdf,attPdf.getPageIndices());
+   attPages.forEach(pg=>finalPdf.addPage(pg));
 
    const bytes=await finalPdf.save();
    downloadBytes(bytes,`${d.dateIntervention}_${safeName(d.clientNom)}_${d.ficheNo}_DOSSIER_COMPLET.pdf`);
-   toast('Dossier client complet cree');
+   toast('Dossier client complet créé');
  }catch(err){
    console.error(err);
-   alert('Impossible de creer le dossier complet : '+err.message);
+   alert('Impossible de créer le dossier complet : '+err.message);
  }
 }
 
-async function createCerfaPdf(returnDocument=false){
+async function createCerfaPdf(){
  if(!form.reportValidity())return;
  saveDossier();
  const d=formDataObject(), s=loadSettings();
@@ -549,8 +541,8 @@ async function createCerfaPdf(returnDocument=false){
    setText(formPdf,'Fiche_no',d.ficheNo);
    setText(formPdf,'Operateur',`${s.entrepriseNom}\n${s.entrepriseAdresse}\nSIRET ${s.entrepriseSiret}`);
    setText(formPdf,'Attestation_no',s.attestationNo);
-   setText(formPdf,'Detenteur',`${d.clientNom}\n${d.clientAdresse}${d.clientTel?`\nTel. ${d.clientTel}`:''}`);
-   setText(formPdf,'Equipement_ID',`${d.equipMarque||''} ${d.equipModele||''} - No série ${d.equipSerie||''} - ${d.equipLocalisation||''}`);
+   setText(formPdf,'Detenteur',`${d.clientNom}\n${d.clientAdresse}${d.clientTel?`\nTél. ${d.clientTel}`:''}`);
+   setText(formPdf,'Equipement_ID',`${d.equipMarque||''} ${d.equipModele||''} - N° série ${d.equipSerie||''} - ${d.equipLocalisation||''}`);
    setText(formPdf,'Equipement_Fluide',d.fluide);
    setText(formPdf,'Equipement_Charge',numberText(d.chargeTotale));
    setText(formPdf,'Equipement_teqCO2',numberText(d.teqCO2));
@@ -630,7 +622,7 @@ async function createCerfaPdf(returnDocument=false){
    setText(formPdf,'Sign_Operateur_Qualite',s.technicienQualite);
    setText(formPdf,'Sign_Operateur_Date',formatDateFr(d.dateIntervention));
    setText(formPdf,'Sign_Detenteur_Nom',d.clientNom);
-   setText(formPdf,'Sign_Detenteur_Qualite','Detenteur');
+   setText(formPdf,'Sign_Detenteur_Qualite','Détenteur');
    setText(formPdf,'Sign_Detenteur_Date',formatDateFr(d.dateIntervention));
 
    const page=pdf.getPages()[0];
@@ -650,10 +642,9 @@ async function createCerfaPdf(returnDocument=false){
    const copied=await pdf.copyPages(att,att.getPageIndices());
    copied.forEach(pg=>pdf.addPage(pg));
 
-   if(returnDocument)return pdf;
    const bytes=await pdf.save();
    downloadBytes(bytes,`${d.ficheNo}_${safeName(d.clientNom)}_CERFA_et_attestation.pdf`);
-   toast('CERFA officiel et attestation crees');
+   toast('CERFA officiel et attestation créés');
  }catch(err){
    console.error(err);
    alert('Impossible de créer le CERFA : '+err.message);
@@ -688,7 +679,7 @@ else lockApp();
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=5.0.0').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.1.1').catch(console.error))}
 
 
 function showPlatformNote(){
