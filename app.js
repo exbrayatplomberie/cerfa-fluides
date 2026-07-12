@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.1.0';
+const VERSION='0.1.1-ipad';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -95,13 +95,96 @@ function calculate(){
  showCalc('#deltaEau',dep!==null&&ret!==null?Math.abs(dep-ret):NaN);
 }
 function setupCanvas(id){
- const canvas=document.getElementById(id),ctx=canvas.getContext('2d');ctx.lineWidth=4;ctx.lineCap='round';ctx.strokeStyle='#111';
- let drawing=false,last=null;
- const pos=e=>{const r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*(canvas.width/r.width),y:(p.clientY-r.top)*(canvas.height/r.height)}};
- const start=e=>{e.preventDefault();drawing=true;last=pos(e)};
- const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;canvas.dataset.signed='1'};
- const end=e=>{if(drawing)e.preventDefault();drawing=false;last=null};
- canvas.addEventListener('pointerdown',start);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);canvas.addEventListener('pointerleave',end);
+ const canvas=document.getElementById(id);
+ const ctx=canvas.getContext('2d');
+ ctx.lineWidth=5;
+ ctx.lineCap='round';
+ ctx.lineJoin='round';
+ ctx.strokeStyle='#111';
+
+ let drawing=false;
+ let activePointerId=null;
+ let last=null;
+
+ function resizeForDisplay(){
+   const rect=canvas.getBoundingClientRect();
+   const ratio=Math.max(1,Math.min(window.devicePixelRatio||1,2));
+   const old=canvas.dataset.signed==='1' ? canvas.toDataURL('image/png') : '';
+   canvas.width=Math.max(1,Math.round(rect.width*ratio));
+   canvas.height=Math.max(1,Math.round(rect.height*ratio));
+   ctx.lineWidth=5*ratio;
+   ctx.lineCap='round';
+   ctx.lineJoin='round';
+   ctx.strokeStyle='#111';
+   if(old){
+     const img=new Image();
+     img.onload=()=>{ctx.drawImage(img,0,0,canvas.width,canvas.height);canvas.dataset.signed='1'};
+     img.src=old;
+   }
+ }
+
+ function pointFromEvent(e){
+   const rect=canvas.getBoundingClientRect();
+   const px=('clientX' in e)?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0);
+   const py=('clientY' in e)?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0);
+   return {
+     x:(px-rect.left)*(canvas.width/rect.width),
+     y:(py-rect.top)*(canvas.height/rect.height)
+   };
+ }
+
+ function start(e){
+   e.preventDefault();
+   drawing=true;
+   activePointerId=e.pointerId??null;
+   if(canvas.setPointerCapture && activePointerId!==null){
+     try{canvas.setPointerCapture(activePointerId)}catch(_){}
+   }
+   last=pointFromEvent(e);
+ }
+
+ function move(e){
+   if(!drawing)return;
+   if(activePointerId!==null && e.pointerId!==undefined && e.pointerId!==activePointerId)return;
+   e.preventDefault();
+   const p=pointFromEvent(e);
+   ctx.beginPath();
+   ctx.moveTo(last.x,last.y);
+   ctx.lineTo(p.x,p.y);
+   ctx.stroke();
+   last=p;
+   canvas.dataset.signed='1';
+ }
+
+ function end(e){
+   if(!drawing)return;
+   e.preventDefault();
+   drawing=false;
+   if(canvas.releasePointerCapture && activePointerId!==null){
+     try{canvas.releasePointerCapture(activePointerId)}catch(_){}
+   }
+   activePointerId=null;
+   last=null;
+ }
+
+ if(window.PointerEvent){
+   canvas.addEventListener('pointerdown',start,{passive:false});
+   canvas.addEventListener('pointermove',move,{passive:false});
+   canvas.addEventListener('pointerup',end,{passive:false});
+   canvas.addEventListener('pointercancel',end,{passive:false});
+ }else{
+   canvas.addEventListener('touchstart',start,{passive:false});
+   canvas.addEventListener('touchmove',move,{passive:false});
+   canvas.addEventListener('touchend',end,{passive:false});
+   canvas.addEventListener('mousedown',start);
+   canvas.addEventListener('mousemove',move);
+   canvas.addEventListener('mouseup',end);
+   canvas.addEventListener('mouseleave',end);
+ }
+
+ canvas.dataset.signed='0';
+ requestAnimationFrame(resizeForDisplay);
+ window.addEventListener('orientationchange',()=>setTimeout(resizeForDisplay,300));
 }
 function clearSignature(id){const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);c.dataset.signed='0'}
 function getSignature(id){const c=document.getElementById(id);return c.dataset.signed==='1'?c.toDataURL('image/png'):''}
@@ -113,10 +196,19 @@ $$('.clear-signature').forEach(b=>b.onclick=()=>clearSignature(b.dataset.target)
 ['signatureTechnicien','signatureClient'].forEach(setupCanvas);
 form.addEventListener('input',calculate);
 $('#saveBtn').onclick=saveDossier;
-$('#printBtn').onclick=()=>{saveDossier();setTimeout(()=>window.print(),100)};
+$('#printBtn').onclick=()=>{saveDossier();setTimeout(()=>window.print(),350)};
 $('#newBtn').onclick=newForm;
 $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.1.0').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.1.1').catch(console.error))}
+
+
+function showPlatformNote(){
+ const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+ if(isIOS && !window.matchMedia('(display-mode: standalone)').matches){
+   toast('iPad : ouvrez avec Safari puis Partager → Ajouter à l’écran d’accueil');
+ }
+}
+window.addEventListener('load',()=>setTimeout(showPlatformNote,800));

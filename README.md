@@ -1,16 +1,15 @@
 # EXBRAYAT PRO - Fluides
 
-Version 0.1.0
+Version 0.1.1 iPad
 
-Fonctions incluses :
-- formulaire client et équipement ;
-- nature de l'intervention ;
-- mesures électriques, frigorifiques et températures ;
-- calculs surchauffe, sous-refroidissement et delta T ;
-- signatures tactiles client et technicien ;
-- sauvegarde locale et historique ;
-- impression de la fiche détaillée ;
-- accès au CERFA officiel et à l'attestation de capacité ;
-- fonctionnement hors connexion après la première ouverture.
+Correctifs iPad / Safari :
+- signature tactile et Apple Pencil fiabilisée ;
+- défilement bloqué uniquement pendant la signature ;
+- champs à 16 px pour éviter le zoom automatique ;
+- gros boutons tactiles ;
+- mise en page adaptée portrait et paysage ;
+- cache hors connexion mis à jour ;
+- ancienne version supprimée automatiquement du cache ;
+- impression rendue plus stable sur Safari.
 
-Publication GitHub Pages : déposer tous les fichiers à la racine du dépôt.
+Publier tous les fichiers à la racine du dépôt GitHub.
