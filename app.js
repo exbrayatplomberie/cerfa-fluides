@@ -1,8 +1,57 @@
 
 'use strict';
-const VERSION='0.4.2.5-case6-corrigee';
+const VERSION='0.4.2.6-verrouillage';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
+
+const LOCAL_PIN=['0','3','6','9','1','2'].join('');
+
+function lockApp(){
+  sessionStorage.removeItem('exbrayat_unlocked');
+  document.body.classList.add('locked');
+
+  const screen=document.getElementById('lockScreen');
+  const input=document.getElementById('pinInput');
+  const message=document.getElementById('lockMessage');
+
+  screen.classList.remove('hidden');
+  input.value='';
+  message.textContent='';
+
+  setTimeout(()=>input.focus(),150);
+}
+
+function unlockApp(){
+  sessionStorage.setItem('exbrayat_unlocked','1');
+  document.body.classList.remove('locked');
+  document.getElementById('lockScreen').classList.add('hidden');
+}
+
+function handleUnlock(){
+  const input=document.getElementById('pinInput');
+  const message=document.getElementById('lockMessage');
+
+  const value=(input.value||'')
+    .replace(/\D/g,'')
+    .slice(0,6);
+
+  input.value=value;
+
+  if(value.length!==6){
+    message.textContent='Saisissez exactement 6 chiffres.';
+    return;
+  }
+
+  if(value===LOCAL_PIN){
+    message.textContent='';
+    unlockApp();
+  }else{
+    message.textContent='Code incorrect.';
+    input.value='';
+    setTimeout(()=>input.focus(),100);
+  }
+}
+
 const form=document.getElementById('intervention-form');
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -660,9 +709,41 @@ $('#printBtn').onclick=()=>{saveDossier();setTimeout(()=>window.print(),350)};
 $('#newBtn').onclick=newForm;
 $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
-renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.5').catch(console.error))}
+const unlockButton=document.getElementById('unlockBtn');
+const pinField=document.getElementById('pinInput');
+const lockButton=document.getElementById('lockNowBtn');
+
+unlockButton.addEventListener('click',handleUnlock);
+
+pinField.addEventListener('input',()=>{
+  pinField.value=pinField.value.replace(/\D/g,'').slice(0,6);
+});
+
+pinField.addEventListener('keydown',event=>{
+  if(event.key==='Enter'){
+    event.preventDefault();
+    handleUnlock();
+  }
+});
+
+if(lockButton){
+  lockButton.addEventListener('click',lockApp);
+}
+
+if(sessionStorage.getItem('exbrayat_unlocked')==='1'){
+  unlockApp();
+}else{
+  lockApp();
+}
+
+renderSettings();
+applyDefaults(true);
+calculate();
+renderHistory();
+
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.6').catch(console.error))}
 
 
 function showPlatformNote(){

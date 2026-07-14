@@ -1,9 +1,9 @@
-# EXBRAYAT PRO v0.4.2.5
+# EXBRAYAT PRO v0.4.2.6
 
-Base : version 0.4.2.4 fonctionnelle.
+Base : version 0.4.2.5 fonctionnelle.
 
-Correction unique :
-- rubrique 6 du CERFA officiel ;
-- sélection OUI/NON du système permanent de détection de fuites ;
-- traitement du champ PDF comme bouton radio ;
-- numéro unique, signatures, boutons et rapports inchangés.
+Modification unique :
+- écran de verrouillage par code à 6 chiffres ;
+- bouton Déverrouiller compatible iPad ;
+- bouton Verrouiller maintenant ;
+- CERFA, case 6, numéro unique, rapport, signatures et boutons inchangés.

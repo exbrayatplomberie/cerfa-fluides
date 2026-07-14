@@ -82,3 +82,74 @@ small{font-weight:500;color:var(--muted)}
 .app-logo{width:72px;height:72px;object-fit:contain;background:#fff;border-radius:14px;padding:4px;flex:none}
 button.complete{background:#7a3f00;font-size:1.02rem}
 @media(max-width:520px){.app-logo{width:58px;height:58px}.topbar{gap:9px}}
+
+.lock-screen{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:linear-gradient(145deg,#0f344a,#174a68);
+}
+
+.lock-screen.hidden{
+  display:none;
+}
+
+.lock-card{
+  width:min(420px,100%);
+  padding:28px;
+  border-radius:20px;
+  background:#fff;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.lock-logo{
+  width:125px;
+  height:125px;
+  object-fit:contain;
+}
+
+.lock-card h1{
+  margin:8px 0 2px;
+  color:#174a68;
+}
+
+.lock-card p{
+  color:#667784;
+}
+
+.lock-card label{
+  margin-top:18px;
+  text-align:left;
+}
+
+.lock-card input{
+  min-height:56px;
+  margin:8px 0 14px;
+  font-size:28px;
+  text-align:center;
+  letter-spacing:10px;
+}
+
+.lock-card button{
+  width:100%;
+  min-height:54px;
+}
+
+.lock-message{
+  min-height:24px;
+  color:#a62a2a!important;
+  font-weight:800;
+}
+
+body.locked>header,
+body.locked>nav,
+body.locked>main{
+  filter:blur(4px);
+  pointer-events:none;
+  user-select:none;
+}

@@ -1,6 +1,6 @@
 
-const CACHE='exbrayat-pro-v0.4.2.5-case6-corrigee';
-const ASSETS=['./','./index.html','./style.css?v=0.4.2.5','./app.js?v=0.4.2.5','./pdf-lib.min.js?v=0.4.2.5','./manifest.webmanifest','./icon.svg','./cerfa_15497-04.pdf','./attestation-capacite.pdf','./logo-exbrayat.png'];
+const CACHE='exbrayat-pro-v0.4.2.6-verrouillage';
+const ASSETS=['./','./index.html','./style.css?v=0.4.2.6','./app.js?v=0.4.2.6','./pdf-lib.min.js?v=0.4.2.6','./manifest.webmanifest','./icon.svg','./cerfa_15497-04.pdf','./attestation-capacite.pdf','./logo-exbrayat.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
