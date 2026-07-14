@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.2-rapport-corrige';
+const VERSION='0.4.2.4-numero-cerfa-unique';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -10,8 +10,22 @@ const $$=s=>[...document.querySelectorAll(s)];
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
 function today(){return new Date().toISOString().slice(0,10)}
 function nextNo(){
-  const d=new Date(), y=d.getFullYear(), list=loadDossiers();
-  return `${y}-${String(list.length+1).padStart(4,'0')}`;
+  const year=new Date().getFullYear();
+  const regex=new RegExp(`^${year}-(\d{4,})$`);
+  let max=0;
+
+  for(const dossier of loadDossiers()){
+    const match=String(dossier.ficheNo||'').match(regex);
+    if(match)max=Math.max(max,parseInt(match[1],10)||0);
+  }
+
+  return `${year}-${String(max+1).padStart(4,'0')}`;
+}
+
+function ensureFicheNo(){
+  const field=document.getElementById('ficheNo');
+  if(!field.value.trim())field.value=nextNo();
+  return field.value.trim();
 }
 function defaultSettings(){
  return {
@@ -33,7 +47,7 @@ function saveSettings(){
 function renderSettings(){const s=loadSettings();Object.keys(s).forEach(k=>{const el=$('#'+k);if(el)el.value=s[k]})}
 function applyDefaults(resetNo=true){
  const s=loadSettings();
- if(resetNo) $('#ficheNo').value=nextNo();
+ if(resetNo && !$('#ficheNo').value.trim()) $('#ficheNo').value=nextNo();
  $('#dateIntervention').value=today();
  $('#detecteurId').value=s.defaultDetecteurId||'';
  $('#detecteurDate').value=s.defaultDetecteurDate||'';
@@ -52,6 +66,7 @@ function formDataObject(){
 }
 function loadDossiers(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
 function saveDossier(){
+ ensureFicheNo();
  if(!form.reportValidity())return;
  const obj=formDataObject(), list=loadDossiers();
  const i=list.findIndex(x=>x.ficheNo===obj.ficheNo);
@@ -294,6 +309,7 @@ function drawRows(page,font,bold,rows,y){
  return y-55;
 }
 async function createReportPdf(){
+ ensureFicheNo();
  if(!form.reportValidity())return;
  saveDossier();
  const d=formDataObject(), s=loadSettings();
@@ -402,6 +418,7 @@ function check(formPdf,name,on){
 }
 
 async function createCompleteDossierPdf(){
+ ensureFicheNo();
  if(!form.reportValidity())return;
  saveDossier();
  const d=formDataObject(),s=loadSettings();
@@ -506,6 +523,7 @@ async function createCompleteDossierPdf(){
 }
 
 async function createCerfaPdf(){
+ ensureFicheNo();
  if(!form.reportValidity())return;
  saveDossier();
  const d=formDataObject(), s=loadSettings();
@@ -641,7 +659,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.4').catch(console.error))}
 
 
 function showPlatformNote(){

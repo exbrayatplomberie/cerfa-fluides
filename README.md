@@ -1,6 +1,10 @@
-# EXBRAYAT PRO v0.4.2
+# EXBRAYAT PRO v0.4.2.4
 
-- Correction du bouton Rapport PDF seul.
-- Titre dans un bandeau indépendant.
-- Logo et coordonnées placés sous le titre.
-- Aucun chevauchement possible.
+Base : version 0.4.2 fonctionnelle.
+
+Correction unique :
+- numéro CERFA automatique et unique ;
+- recherche du plus grand numéro déjà enregistré ;
+- aucun numéro supprimé ne sera réutilisé ;
+- numéro forcé dans le CERFA officiel avant génération ;
+- signatures, boutons et rapport inchangés.
