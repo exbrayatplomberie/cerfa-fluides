@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.2.6-verrouillage';
+const VERSION='0.4.2.7-verrouillage-ipad';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 
@@ -714,10 +714,25 @@ const unlockButton=document.getElementById('unlockBtn');
 const pinField=document.getElementById('pinInput');
 const lockButton=document.getElementById('lockNowBtn');
 
-unlockButton.addEventListener('click',handleUnlock);
+function unlockFromTap(event){
+  if(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  handleUnlock();
+}
+
+unlockButton.addEventListener('click',unlockFromTap,false);
+unlockButton.addEventListener('pointerup',unlockFromTap,false);
+unlockButton.addEventListener('touchend',unlockFromTap,{passive:false});
 
 pinField.addEventListener('input',()=>{
   pinField.value=pinField.value.replace(/\D/g,'').slice(0,6);
+
+  // Sur iPad, validation automatique dès que les 6 chiffres sont saisis.
+  if(pinField.value.length===6){
+    setTimeout(handleUnlock,80);
+  }
 });
 
 pinField.addEventListener('keydown',event=>{
@@ -743,7 +758,7 @@ calculate();
 renderHistory();
 
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.6').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.7').catch(console.error))}
 
 
 function showPlatformNote(){

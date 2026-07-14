@@ -1,9 +1,9 @@
-# EXBRAYAT PRO v0.4.2.6
+# EXBRAYAT PRO v0.4.2.7
 
-Base : version 0.4.2.5 fonctionnelle.
+Base : version 0.4.2.6.
 
-Modification unique :
-- écran de verrouillage par code à 6 chiffres ;
-- bouton Déverrouiller compatible iPad ;
-- bouton Verrouiller maintenant ;
-- CERFA, case 6, numéro unique, rapport, signatures et boutons inchangés.
+Correction unique :
+- déverrouillage compatible iPad ;
+- validation automatique dès 6 chiffres ;
+- prise en charge click, pointerup et touchend ;
+- CERFA, rapport, signatures et boutons inchangés.
