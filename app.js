@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.2.4-numero-cerfa-unique';
+const VERSION='0.4.2.5-case6-corrigee';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 const form=document.getElementById('intervention-form');
@@ -416,6 +416,9 @@ function setText(formPdf,name,value){
 function check(formPdf,name,on){
  try{const f=formPdf.getCheckBox(name);on?f.check():f.uncheck()}catch(_){}
 }
+function selectRadio(formPdf,name,value){
+ try{formPdf.getRadioGroup(name).select(value)}catch(_){}
+}
 
 async function createCompleteDossierPdf(){
  ensureFicheNo();
@@ -557,7 +560,7 @@ async function createCerfaPdf(){
    setText(formPdf,'Controle_Annee',dt[0]||'');
 
    // 6 - système permanent
-   check(formPdf,'Bouton_Oui',d.systemePermanent==='oui');
+   selectRadio(formPdf,'Bouton_Oui',d.systemePermanent==='oui' ? '1' : '2');
 
    // 7, 8 et 9 - seuil et périodicité
    const per=periodicity();
@@ -659,7 +662,7 @@ $('#saveSettings').onclick=saveSettings;
 $('#historySearch').oninput=e=>renderHistory(e.target.value);
 renderSettings();applyDefaults(true);calculate();renderHistory();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.4').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.5').catch(console.error))}
 
 
 function showPlatformNote(){
