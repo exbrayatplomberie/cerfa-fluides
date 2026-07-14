@@ -1,9 +1,11 @@
-# EXBRAYAT PRO v0.4.2.7
+# EXBRAYAT PRO v0.4.2.8
 
-Base : version 0.4.2.6.
+Base : version 0.4.2.7 fonctionnelle.
 
-Correction unique :
-- déverrouillage compatible iPad ;
-- validation automatique dès 6 chiffres ;
-- prise en charge click, pointerup et touchend ;
-- CERFA, rapport, signatures et boutons inchangés.
+Modification unique :
+- numéro unique basé sur la date et l'heure ;
+- exemple : 20260714-103045 ;
+- suffixe automatique si deux fiches sont créées pendant la même seconde ;
+- le bouton Nouvelle fiche vide l'ancien numéro et en crée un nouveau ;
+- le numéro reste identique lors de la modification d'une fiche existante ;
+- CERFA, case 6, rapport, signatures, boutons et verrouillage inchangés.

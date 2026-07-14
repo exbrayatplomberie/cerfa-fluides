@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.2.7-verrouillage-ipad';
+const VERSION='0.4.2.8-numero-date-heure';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 
@@ -59,21 +59,40 @@ const $$=s=>[...document.querySelectorAll(s)];
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
 function today(){return new Date().toISOString().slice(0,10)}
 function nextNo(){
-  const year=new Date().getFullYear();
-  const regex=new RegExp(`^${year}-(\d{4,})$`);
-  let max=0;
+  const now=new Date();
 
-  for(const dossier of loadDossiers()){
-    const match=String(dossier.ficheNo||'').match(regex);
-    if(match)max=Math.max(max,parseInt(match[1],10)||0);
+  const year=String(now.getFullYear());
+  const month=String(now.getMonth()+1).padStart(2,'0');
+  const day=String(now.getDate()).padStart(2,'0');
+  const hour=String(now.getHours()).padStart(2,'0');
+  const minute=String(now.getMinutes()).padStart(2,'0');
+  const second=String(now.getSeconds()).padStart(2,'0');
+
+  const base=`${year}${month}${day}-${hour}${minute}${second}`;
+  const lastBase=localStorage.getItem('exbrayat_last_number_base')||'';
+  let suffix=parseInt(localStorage.getItem('exbrayat_last_number_suffix')||'0',10);
+
+  if(base===lastBase){
+    suffix+=1;
+  }else{
+    suffix=0;
   }
 
-  return `${year}-${String(max+1).padStart(4,'0')}`;
+  localStorage.setItem('exbrayat_last_number_base',base);
+  localStorage.setItem('exbrayat_last_number_suffix',String(suffix));
+
+  return suffix===0
+    ? base
+    : `${base}-${String(suffix).padStart(2,'0')}`;
 }
 
 function ensureFicheNo(){
   const field=document.getElementById('ficheNo');
-  if(!field.value.trim())field.value=nextNo();
+
+  if(!field.value.trim()){
+    field.value=nextNo();
+  }
+
   return field.value.trim();
 }
 function defaultSettings(){
@@ -115,12 +134,13 @@ function formDataObject(){
 }
 function loadDossiers(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
 function saveDossier(){
- ensureFicheNo();
+ const ficheNo=ensureFicheNo();
+
  if(!form.reportValidity())return;
  const obj=formDataObject(), list=loadDossiers();
  const i=list.findIndex(x=>x.ficheNo===obj.ficheNo);
  if(i>=0)list[i]=obj;else list.unshift(obj);
- localStorage.setItem(STORE,JSON.stringify(list));renderHistory();toast('Dossier enregistré sur cet appareil');
+ localStorage.setItem(STORE,JSON.stringify(list));renderHistory();toast(`Dossier ${ficheNo} enregistré sur cet appareil`);
 }
 function fillForm(d){
  form.reset();
@@ -133,8 +153,18 @@ function fillForm(d){
  calculate();switchPage('intervention');toast(`Fiche ${d.ficheNo} chargée`);
 }
 function newForm(){
- if(!confirm('Effacer la fiche en cours ?'))return;
- form.reset();clearSignature('signatureTechnicien');clearSignature('signatureClient');applyDefaults(true);calculate();toast('Nouvelle fiche prête');
+ if(!confirm('Créer une nouvelle fiche et effacer la saisie en cours ?'))return;
+
+ form.reset();
+ document.getElementById('ficheNo').value='';
+
+ clearSignature('signatureTechnicien');
+ clearSignature('signatureClient');
+
+ applyDefaults(true);
+ calculate();
+
+ toast(`Nouvelle fiche ${document.getElementById('ficheNo').value} prête`);
 }
 function renderHistory(filter=''){
  const list=loadDossiers(), q=filter.toLowerCase().trim(), box=$('#historyList');box.innerHTML='';
@@ -758,7 +788,7 @@ calculate();
 renderHistory();
 
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.7').catch(console.error))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.4.2.8').catch(console.error))}
 
 
 function showPlatformNote(){
