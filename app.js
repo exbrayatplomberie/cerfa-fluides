@@ -1,6 +1,6 @@
 
 'use strict';
-const VERSION='0.4.3.0-rapport-2-pages';
+const VERSION='0.4.3.1-signatures-separees';
 const STORE='exbrayat_pro_dossiers';
 const SETTINGS='exbrayat_pro_settings';
 
@@ -457,7 +457,7 @@ async function createReportPdf(){
  }
 
  function signatureFrame(page,x,title,name){
-   const boxY=45;
+   const boxY=28;
    const boxW=250;
    const boxH=108;
 
@@ -570,10 +570,10 @@ async function createReportPdf(){
  ],y,35);
 
  y=section(page,'OBSERVATIONS',y);
- observationBox(page,y,70);
+ observationBox(page,y,58);
 
- page.drawText('SIGNATURES',{x:32,y:169,size:11,font:bold,color:BLUE});
- page.drawLine({start:{x:32,y:162},end:{x:563,y:162},thickness:1,color:LINE});
+ page.drawText('SIGNATURES',{x:32,y:158,size:11,font:bold,color:BLUE});
+ page.drawLine({start:{x:32,y:151},end:{x:563,y:151},thickness:1,color:LINE});
 
  const techFrame=signatureFrame(page,32,'TECHNICIEN',s.technicienNom);
  const clientFrame=signatureFrame(page,313,'CLIENT / DETENTEUR',d.clientNom);

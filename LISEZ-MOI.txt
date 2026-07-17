@@ -1,52 +1,37 @@
-EXBRAYAT PRO v0.4.3.0 — INSTALLATION
+EXBRAYAT PRO v0.4.3.1 — CORRECTION SIGNATURES
 
-CONTENU
-- app.js : version modifiée avec rapport PDF professionnel sur 2 pages.
-
-IMPORTANT
-Ce paquet contient uniquement le fichier à remplacer, car c'est le seul fichier
-du projet qui m'a été transmis dans la conversation.
+Cette version corrige uniquement la page 2 du rapport :
+- zone d'observations moins haute ;
+- espace ajouté entre observations et signatures ;
+- cadres de signatures descendus ;
+- aucune signature ne doit chevaucher la zone d'observations.
 
 PROCÉDURE GITHUB
 
-1. Décompressez le fichier ZIP.
-2. Ouvrez le dossier EXBRAYAT-PRO-v0.4.3.0.
-3. Vous trouverez le fichier app.js.
+1. Décompressez le ZIP.
+2. Ouvrez le fichier app.js contenu dans le dossier.
 
-4. Sur GitHub, ouvrez le dépôt :
-   exbrayatplomberie / cerfa-fluides
+3. Sur GitHub, ouvrez le dépôt cerfa-fluides.
+4. Ouvrez app.js.
+5. Cliquez sur le crayon Edit.
+6. Cliquez dans le texte et faites Ctrl + A.
+7. Ouvrez le nouveau app.js, faites Ctrl + A puis Ctrl + C.
+8. Revenez sur GitHub et faites Ctrl + V.
+9. Cliquez sur Commit changes.
+10. Message conseillé :
+    Correction séparation observations signatures
 
-5. Ouvrez le fichier app.js.
-6. Cliquez sur le crayon Edit.
-7. Cliquez dans le texte, puis Ctrl + A.
-8. Ouvrez le nouveau app.js téléchargé.
-9. Faites Ctrl + A puis Ctrl + C.
-10. Revenez sur GitHub et faites Ctrl + V.
-11. Cliquez sur Commit changes.
-12. Message conseillé :
-    Rapport PDF professionnel sur 2 pages
-13. Confirmez Commit changes.
+VÉRIFICATION IMPORTANTE DANS INDEX.HTML
 
-MODIFICATION DE INDEX.HTML
+11. Ouvrez index.html.
+12. Vérifiez qu'il n'existe PLUS de ligne :
+    <script src="rapport-2-pages.js?..."></script>
+    Si elle existe encore, supprimez-la.
 
-14. Ouvrez index.html sur GitHub.
-15. Cliquez sur le crayon Edit.
-16. Supprimez entièrement toute ligne du type :
-    <script src="rapport-2-pages.js?v=..."></script>
+13. Remplacez la ligne app.js par :
+    <script src="app.js?v=0.4.3.1"></script>
 
-17. Cherchez la ligne qui charge app.js et remplacez-la par :
-    <script src="app.js?v=0.4.3.0"></script>
-
-18. Cliquez sur Commit changes.
-
-TEST
-
-19. Attendez environ 2 minutes.
-20. Fermez complètement l'application.
-21. Rouvrez-la.
-22. Sur PC, faites Ctrl + F5 si nécessaire.
-23. Générez un rapport avec « Rapport PDF seul ».
-
-Le rapport doit comporter 2 pages :
-- page 1 : client, équipement, intervention et contrôles ;
-- page 2 : mesures, fluides, observations et signatures.
+14. Cliquez sur Commit changes.
+15. Attendez 2 minutes.
+16. Sur PC : fermez l'application, rouvrez-la puis faites Ctrl + F5.
+17. Sur iPad : fermez complètement l'application puis rouvrez-la.
