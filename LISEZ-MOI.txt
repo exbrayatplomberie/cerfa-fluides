@@ -1,10 +1,52 @@
-CERFA FLUIDES - EXBRAYAT
+EXBRAYAT PRO v0.4.3.0 — INSTALLATION
 
-1. Cette application fonctionne dans Safari, Chrome ou Firefox.
-2. Pour une installation sur iPad, le dossier doit être publié sur un hébergement HTTPS.
-3. Ouvrir ensuite le lien dans Safari > Partager > Ajouter à l'écran d'accueil.
-4. Après la première ouverture, l'application fonctionne hors connexion.
-5. Les données sont stockées localement sur l'appareil : faire régulièrement une sauvegarde depuis l'onglet Entreprise.
-6. Le PDF se crée par la fonction Imprimer de Safari. Sur iPad, écarter deux doigts sur l'aperçu d'impression puis Partager > Enregistrer dans Fichiers.
+CONTENU
+- app.js : version modifiée avec rapport PDF professionnel sur 2 pages.
 
-Référence réglementaire intégrée : CERFA 15497*04.
+IMPORTANT
+Ce paquet contient uniquement le fichier à remplacer, car c'est le seul fichier
+du projet qui m'a été transmis dans la conversation.
+
+PROCÉDURE GITHUB
+
+1. Décompressez le fichier ZIP.
+2. Ouvrez le dossier EXBRAYAT-PRO-v0.4.3.0.
+3. Vous trouverez le fichier app.js.
+
+4. Sur GitHub, ouvrez le dépôt :
+   exbrayatplomberie / cerfa-fluides
+
+5. Ouvrez le fichier app.js.
+6. Cliquez sur le crayon Edit.
+7. Cliquez dans le texte, puis Ctrl + A.
+8. Ouvrez le nouveau app.js téléchargé.
+9. Faites Ctrl + A puis Ctrl + C.
+10. Revenez sur GitHub et faites Ctrl + V.
+11. Cliquez sur Commit changes.
+12. Message conseillé :
+    Rapport PDF professionnel sur 2 pages
+13. Confirmez Commit changes.
+
+MODIFICATION DE INDEX.HTML
+
+14. Ouvrez index.html sur GitHub.
+15. Cliquez sur le crayon Edit.
+16. Supprimez entièrement toute ligne du type :
+    <script src="rapport-2-pages.js?v=..."></script>
+
+17. Cherchez la ligne qui charge app.js et remplacez-la par :
+    <script src="app.js?v=0.4.3.0"></script>
+
+18. Cliquez sur Commit changes.
+
+TEST
+
+19. Attendez environ 2 minutes.
+20. Fermez complètement l'application.
+21. Rouvrez-la.
+22. Sur PC, faites Ctrl + F5 si nécessaire.
+23. Générez un rapport avec « Rapport PDF seul ».
+
+Le rapport doit comporter 2 pages :
+- page 1 : client, équipement, intervention et contrôles ;
+- page 2 : mesures, fluides, observations et signatures.
