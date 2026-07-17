@@ -176,3 +176,4 @@ async function createReportPdf(){
 
   toast('Rapport PDF cree sur 2 pages');
 }
+document.getElementById('reportPdfBtn').onclick = createReportPdf;
