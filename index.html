@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#174a68">
   <title>EXBRAYAT PRO - Fluides</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=0.4.2.8">
+  <link rel="stylesheet" href="style.css?v=0.4.2.9">
 </head>
 <body class="locked">
 
@@ -38,7 +38,7 @@
     <h1>EXBRAYAT PRO</h1>
     <p>Interventions fluides frigorigènes</p>
   </div>
-  <span class="version">Version 0.4.2.8 Numéro date-heure</span>
+  <span class="version">Version 0.4.2.9 Pense-bête mesures</span>
 </header>
 
 <nav class="tabs" aria-label="Navigation">
@@ -145,6 +145,38 @@
       <label>Surchauffe calculée (K)<input id="surchauffe" readonly></label>
       <label>Sous-refroidissement calculé (K)<input id="sousRefroidissement" readonly></label>
     </div>
+
+    <details class="measurement-help">
+      <summary>📖 Pense-bête : points de mesure et diagnostic rapide</summary>
+      <div class="measurement-help-content">
+        <img src="pense-bete-mesures-clim-reversible.png" alt="Schéma des points de mesure d’un climatiseur réversible en mode froid" class="measurement-diagram">
+
+        <div class="measurement-formulas">
+          <strong>Rappels :</strong>
+          <span>Surchauffe = T° aspiration − T° saturation BP</span>
+          <span>Sous-refroidissement = T° saturation HP − T° liquide</span>
+        </div>
+
+        <h4>Petit diagnostic indicatif</h4>
+        <div class="diagnostic-table" role="table" aria-label="Diagnostic frigorifique indicatif">
+          <div class="diagnostic-head" role="columnheader">Constat</div>
+          <div class="diagnostic-head" role="columnheader">Causes possibles</div>
+          <div role="cell">Surchauffe élevée</div>
+          <div role="cell">Manque de fluide, détendeur trop fermé ou alimentation insuffisante de l’évaporateur.</div>
+          <div role="cell">Surchauffe faible</div>
+          <div role="cell">Détendeur trop ouvert, retour de liquide ou évaporateur trop alimenté.</div>
+          <div role="cell">Sous-refroidissement faible</div>
+          <div role="cell">Manque de fluide ou mauvaise condensation.</div>
+          <div role="cell">Sous-refroidissement élevé</div>
+          <div role="cell">Excès de fluide, condenseur encrassé ou restriction sur la ligne liquide.</div>
+          <div role="cell">HP élevée</div>
+          <div role="cell">Échangeur extérieur encrassé, débit d’air insuffisant ou surcharge.</div>
+          <div role="cell">BP faible</div>
+          <div role="cell">Manque de fluide, détendeur restreint, filtres sales ou échangeur intérieur givré.</div>
+        </div>
+        <p class="hint measurement-warning">Aide indicative pour un climatiseur réversible. Toujours comparer aux données du constructeur et aux conditions de fonctionnement.</p>
+      </div>
+    </details>
 
     <h3>Températures d'air / eau</h3>
     <div class="grid four">
@@ -327,7 +359,7 @@
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="pdf-lib.min.js?v=0.4.2.8"></script>
-<script src="app.js?v=0.4.2.8"></script>
+<script src="pdf-lib.min.js?v=0.4.2.9"></script>
+<script src="app.js?v=0.4.2.9"></script>
 </body>
 </html>
