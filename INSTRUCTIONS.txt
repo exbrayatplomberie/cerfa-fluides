@@ -1,0 +1,22 @@
+CORRECTIF EXBRAYAT PRO — RAPPORT SUR 2 PAGES
+
+Ce correctif ne change que le rapport PDF.
+Il ne touche pas au CERFA, au pense-bête, à la numérotation,
+aux dossiers enregistrés, aux signatures dans le CERFA ni aux autres fonctions.
+
+1. Envoyer le fichier "rapport-2-pages.js" à la racine du dépôt GitHub,
+   au même endroit que index.html et app.js.
+
+2. Dans index.html, repérer la ligne qui charge app.js :
+   <script src="app.js"></script>
+
+3. Juste EN DESSOUS, ajouter :
+   <script src="rapport-2-pages.js"></script>
+
+4. Enregistrer sur GitHub.
+
+5. Attendre environ 1 à 2 minutes, puis actualiser l'application.
+   Sur iPad, fermer complètement l'application puis la rouvrir.
+
+6. Faire un rapport test. Il doit comporter exactement 2 pages,
+   avec les deux signatures en bas de la deuxième page.
