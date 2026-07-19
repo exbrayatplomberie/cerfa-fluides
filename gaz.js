@@ -65,116 +65,144 @@ async function createPdf(){
  if(!d.gazClientNom){alert('Veuillez renseigner le nom du client.');return}
  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  let previewWindow=null;
- if(isIOS && !(navigator.canShare&&typeof File!=='undefined')){
-  try{previewWindow=window.open('about:blank','_blank')}catch(_e){}
+ if(isIOS){
+  try{
+   previewWindow=window.open('about:blank','_blank');
+   if(previewWindow)previewWindow.document.write('<p style="font-family:Arial;padding:20px">Création de l’attestation en cours…</p>');
+  }catch(_e){}
  }
  try{
-  const templateResponse=await fetch('attestation-entretien-gaz-capeb.pdf?v=0.4.3.3',{cache:'no-store'});
-  if(!templateResponse.ok)throw new Error('Le modèle CAPEB est introuvable.');
-  const templateBytes=await templateResponse.arrayBuffer();
-  const {PDFDocument,StandardFonts}=PDFLib;
+  const response=await fetch('attestation-entretien-gaz-capeb.pdf?v=0.4.3.4',{cache:'no-store'});
+  if(!response.ok)throw new Error('Le modèle CAPEB est introuvable.');
+  const templateBytes=await response.arrayBuffer();
+  const {PDFDocument,StandardFonts,rgb}=PDFLib;
   const pdf=await PDFDocument.load(templateBytes,{ignoreEncryption:true,updateMetadata:false});
-  const formPdf=pdf.getForm();
+  const pages=pdf.getPages();
   const font=await pdf.embedFont(StandardFonts.Helvetica);
-  const safe=v=>pdfSafe(v||'');
-  const setText=(name,value,size=8)=>{
-   try{
-    const f=formPdf.getTextField(name);
-    f.setText(safe(value));
-    if(typeof f.setFontSize==='function')f.setFontSize(size);
-   }catch(e){console.warn('Champ PDF absent :',name,e)}
-  };
-  const selectRadio=(name,value)=>{
-   try{formPdf.getRadioGroup(name).select(value)}catch(e){console.warn('Choix PDF absent :',name,value,e)}
-  };
+  const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
+  const black=rgb(0,0,0);
+
+  // Le formulaire PDF CAPEB d'origine est mal interprété par certains lecteurs,
+  // notamment Safari/iPad. On l'aplatit puis on écrit directement sur les pages.
+  try{pdf.getForm().flatten()}catch(e){console.warn('Aplatissement du modèle CAPEB :',e)}
+
+  const clean=v=>pdfSafe(v||'');
+  function fitSize(text,f,maxSize,maxWidth){
+   let s=maxSize;
+   while(s>5&&f.widthOfTextAtSize(clean(text),s)>maxWidth)s-=0.25;
+   return s;
+  }
+  function drawLine(page,text,x,y,w,size=8,f=font){
+   const value=clean(text); if(!value)return;
+   page.drawText(value,{x,y,size:fitSize(value,f,size,w),font:f,color:black,maxWidth:w});
+  }
+  function drawBox(page,text,x,y,w,h,size=8,f=font,lineHeight=size+2){
+   const value=clean(text); if(!value)return;
+   const lines=wrap(value,f,size,w-2);
+   let yy=y+h-size-1;
+   const max=Math.max(1,Math.floor(h/lineHeight));
+   lines.slice(0,max).forEach(line=>{page.drawText(line,{x:x+1,y:yy,size,font:f,color:black,maxWidth:w-2});yy-=lineHeight});
+  }
+  function mark(page,x,y){
+   page.drawLine({start:{x:x-3.2,y:y-3.2},end:{x:x+3.2,y:y+3.2},thickness:1.6,color:black});
+   page.drawLine({start:{x:x-3.2,y:y+3.2},end:{x:x+3.2,y:y-3.2},thickness:1.6,color:black});
+  }
+  function markChoice(page,value,y){
+   const x=value==='Oui'?428.3:value==='Non'?461.3:508.2;
+   mark(page,x,y);
+  }
+
+  const p1=pages[0],p2=pages[1],p3=pages[2];
   const company='EXBRAYAT CEDRIC PLOMBERIE CHAUFFAGE\n26 avenue de Jumeaux\n63570 BRASSAC LES MINES\nTel : 06 17 16 15 38\ne-mail : cedric.exbrayat@orange.fr';
   const client=[d.gazClientNom,d.gazClientTel,d.gazClientAdresse].filter(Boolean).join('\n');
-  setText('A2-Coordonnees prestataire',company,7);
-  setText('A2-Coordonnees client',client,8);
-  setText('A2-Adresse installation',d.gazInstallationAdresse,8);
-  setText('A2-Local chaudiere',d.gazLocal,8);
-  setText('A2-marque1',d.gazChaudiere,8);
-  setText('A2-puissance1',d.gazPuissance,8);
-  setText('A2-type1',d.gazEvacuation,8);
-  setText('A2-mes1',formatDate(d.gazMiseService),8);
-  setText('A2-ns1',d.gazSerie,8);
-  setText('A2-marque2',d.gazBruleur,8);
-  setText('A2-puissance2',d.gazBruleurPuissance,8);
-  setText('A2-mes2',formatDate(d.gazBruleurDate),8);
-  setText('A2-ns2',d.gazBruleurSerie,8);
-  setText('A2-Date entretien',formatDate(d.gazDernierEntretien),8);
-  setText('A2-Date ramonage',formatDate(d.gazDernierRamonage),8);
-  setText('No contrat',d.gazNumero,8);
 
-  const mainGroups=['A2-Groupe1','A2-Groupe2','A2-Groupe3','A2-Groupe4','A2-Groupe5','A2-Groupe6','A2-Groupe7','A2-Groupe8','A2-Groupe81','A2-Groupe82','A2-Groupe83','A2-Groupe84','A2-Groupe85','A2-Groupe86'];
-  mainGroups.forEach((name,i)=>selectRadio(name,d['gazCheck'+i]==='Oui'?'Oui':d['gazCheck'+i]==='Non'?'Non':'SO'));
-  ['A2-Groupe9','A2-Groupe10','A2-Groupe11'].forEach((name,i)=>selectRadio(name,d['gazExtra'+i]==='Oui'?'Oui':d['gazExtra'+i]==='Non'?'Non':'SO'));
+  drawLine(p1,d.gazNumero,118,772,138,9,bold);
+  drawBox(p1,company,75,516,215,97,7,font,10);
+  drawBox(p1,client,324,584,214,33,8,font,10);
+  drawLine(p1,d.gazInstallationAdresse,324,556,213,8);
+  drawLine(p1,d.gazLocal,324,523,213,8);
+  drawLine(p1,d.gazChaudiere,116,481,173,8);
+  drawLine(p1,d.gazPuissance,183,468.5,106,8);
+  drawLine(p1,d.gazEvacuation,150,455.5,139,8);
+  drawLine(p1,formatDate(d.gazMiseService),146,443,143,8);
+  drawLine(p1,d.gazSerie,123,430.5,166,8);
+  drawLine(p1,d.gazBruleur,369,481,169,8);
+  drawLine(p1,d.gazBruleurPuissance,433,468.5,105,8);
+  drawLine(p1,formatDate(d.gazBruleurDate),394,455.5,144,8);
+  drawLine(p1,d.gazBruleurSerie,370,443,168,8);
+  drawLine(p1,formatDate(d.gazDernierEntretien),201,407,93,8);
+  drawLine(p1,formatDate(d.gazDernierRamonage),444,407,94,8);
 
-  setText('A2-Temp fumees',d.gazTempFumees,9);
-  setText('A2-Temp ambiante',d.gazTempAmbiante,9);
-  setText('A2-Teneur co2',d.gazCO2,9);
-  setText('A2-Teneur o2',d.gazO2,9);
-  setText('A2-Teneur co',d.gazCO,9);
-  setText('A2-Appareil mesure',d.gazAppareilMesure,8);
-  setText('A2-Rendement1',d.gazRendement,9);
-  setText('A2-Rendement2',d.gazRendementRef,9);
-  setText('A2-nox',d.gazNox,9);
+  const mainY=[358.3,339.0,326.0,313.0,300.1,287.3,274.4,261.5,248.7,236.0,223.0,210.1,192.0,169.6];
+  mainY.forEach((y,i)=>markChoice(p1,d['gazCheck'+i]||'Sans objet',y));
+  const extraY=[111.3,97.9,85.3];
+  extraY.forEach((y,i)=>markChoice(p1,d['gazExtra'+i]||'Sans objet',y));
+
+  drawLine(p2,d.gazTempFumees,158,714,53,9);
+  drawLine(p2,d.gazTempAmbiante,151,693,59,9);
+  drawLine(p2,d.gazCO2,66,662,53,9);
+  drawLine(p2,d.gazO2,153,662,54,9);
+  drawLine(p2,d.gazCO,431,741,54,9,bold);
+  drawBox(p2,d.gazAppareilMesure,57,508,482,96,8,font,11);
+  drawLine(p2,d.gazRendement,185,466,53,9);
+  drawLine(p2,d.gazRendementRef,219,439.5,53,9);
+  drawLine(p2,d.gazNox,464,476,74,9);
+
   const co=parseFloat(d.gazCO);
-  if(Number.isFinite(co))selectRadio('A2-Groupe18',co<10?'Choix1':co<50?'Choix2':'Choix3');
+  if(Number.isFinite(co))mark(p2,309.5,co<10?731:co<50?717.5:684.8);
+  if(d.gazClasseType==='Standard ou basse température')mark(p2,191.2,370.3);
+  if(d.gazClasseType==='Condensation')mark(p2,161.8,339.0);
+  const classKey=(d.gazClasseType||'')+'|'+(d.gazClasseDate||'');
+  const classY={
+   'Standard ou basse température|Avant 2005':378.4,
+   'Standard ou basse température|Après 2005':362.8,
+   'Condensation|Avant 2005':347.0,
+   'Condensation|Après 2005':331.5
+  }[classKey];
+  if(classY)mark(p2,319.2,classY);
 
-  if(d.gazClasseType==='Standard ou basse température')selectRadio('A2-GClasse','Choix1');
-  if(d.gazClasseType==='Condensation')selectRadio('A2-GClasse','Choix2');
-  const classMap={
-   'Standard ou basse température|Avant 2005':'Choix1',
-   'Standard ou basse température|Après 2005':'Choix2',
-   'Condensation|Avant 2005':'Choix3',
-   'Condensation|Après 2005':'Choix4'
-  };
-  const fabChoice=classMap[(d.gazClasseType||'')+'|'+(d.gazClasseDate||'')];
-  if(fabChoice)selectRadio('A2-GFab',fabChoice);
+  drawBox(p3,d.gazDefauts||'Néant',57,643,482,108,8,font,11);
+  drawBox(p3,d.gazConseils||'Aucun conseil complémentaire.',57,491,482,104,8,font,11);
+  drawLine(p3,'Néant',57,457,480,8);
+  drawLine(p3,'Néant',57,329,480,8);
+  drawLine(p3,'Brassac-les-Mines',79,179,130,8);
+  drawLine(p3,formatDate(d.gazDate),222,179,99,8);
+  drawLine(p3,formatDate(d.gazDate),117,164,420,8);
 
-  setText('A2-Defauts corriges',d.gazDefauts||'Néant',8);
-  setText('A2-Usage',d.gazConseils||'Aucun conseil complémentaire.',8);
-  setText('A2-Ameliorations','',8);
-  setText('A2-Remplacement','',8);
-  setText('A2-Fait a','Brassac-les-Mines',8);
-  setText('A2-Fait le',formatDate(d.gazDate),8);
-  setText('A2-Date visite',formatDate(d.gazDate),8);
-
-  try{formPdf.updateFieldAppearances(font)}catch(e){console.warn('Mise à jour des champs PDF :',e)}
-  try{formPdf.flatten()}catch(e){console.warn('Aplatissement PDF :',e)}
-
-  const page3=pdf.getPages()[2];
   if(d.signatureTechnicien){
    const im=await pdf.embedPng(d.signatureTechnicien);
-   page3.drawImage(im,{x:62,y:58,width:205,height:92});
+   const dims=im.scale(1);const maxW=205,maxH=72,scale=Math.min(maxW/dims.width,maxH/dims.height);
+   const w=dims.width*scale,h=dims.height*scale;
+   p3.drawImage(im,{x:62+(maxW-w)/2,y:54+(maxH-h)/2,width:w,height:h});
   }
   if(d.signatureClient){
    const im=await pdf.embedPng(d.signatureClient);
-   page3.drawImage(im,{x:316,y:58,width:205,height:92});
+   const dims=im.scale(1);const maxW=205,maxH=72,scale=Math.min(maxW/dims.width,maxH/dims.height);
+   const w=dims.width*scale,h=dims.height*scale;
+   p3.drawImage(im,{x:320+(maxW-w)/2,y:54+(maxH-h)/2,width:w,height:h});
   }
 
-  const bytes=await pdf.save({useObjectStreams:false});
+  const bytes=await pdf.save({useObjectStreams:false,addDefaultPage:false});
   const filename=`${d.gazNumero||'entretien_gaz'}_${(d.gazClientNom||'client').replace(/[^a-z0-9]+/gi,'_')}.pdf`;
   const blob=new Blob([bytes],{type:'application/pdf'});
-  const file=typeof File!=='undefined'?new File([blob],filename,{type:'application/pdf'}):null;
 
-  if(isIOS && file && navigator.canShare && navigator.canShare({files:[file]})){
-   await navigator.share({files:[file],title:'Attestation entretien chaudière gaz',text:'Attestation à remettre au client et à archiver.'});
+  save();
+  if(isIOS){
+   // Sur iPad, un onglet est ouvert dès le clic afin d'éviter le blocage Safari
+   // provoqué par les traitements asynchrones. Le PDF est ensuite injecté dedans.
+   let binary='';const chunk=0x8000;
+   for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+   const dataUrl='data:application/pdf;base64,'+btoa(binary);
+   if(previewWindow&&!previewWindow.closed){previewWindow.location.replace(dataUrl)}
+   else{window.location.href=dataUrl}
   }else{
    const url=URL.createObjectURL(blob);
-   if(previewWindow&&!previewWindow.closed){previewWindow.location.href=url}
-   else{
-    const a=document.createElement('a');
-    a.href=url;a.download=filename;a.target='_blank';a.rel='noopener';
-    document.body.appendChild(a);a.click();a.remove();
-   }
-   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   const a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';a.rel='noopener';
+   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }
-  save();toast('Attestation CAPEB créée');
+  toast('Attestation CAPEB créée');
  }catch(e){
   if(previewWindow&&!previewWindow.closed)previewWindow.close();
-  if(e&&e.name==='AbortError')return;
   console.error(e);alert('Impossible de créer le PDF : '+(e.message||e));
  }
 }

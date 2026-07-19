@@ -1,0 +1,10 @@
+EXBRAYAT PRO V0.4.3.4 — PDF GAZ ET IPAD
+
+Corrections limitées au module Entretien chaudière gaz :
+- remplissage visible directement sur le dessin CAPEB original ;
+- cases Oui / Non / Sans objet marquées directement sur la page ;
+- signatures intégrées directement au PDF ;
+- ouverture iPad corrigée par pré-ouverture de la fenêtre dès le clic ;
+- nouveau cache v0.4.3.4.
+
+La partie frigorifique et le verrouillage n'ont pas été modifiés.
