@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#174a68">
-  <title>EXBRAYAT PRO</title>
+  <title>EXBRAYAT PRO - Fluides</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=0.4.3.0">
+  <link rel="stylesheet" href="style.css?v=0.4.2.9">
 </head>
 <body class="locked">
 
@@ -36,15 +36,14 @@
   <img src="logo-exbrayat.png" alt="Logo Exbrayat" class="app-logo">
   <div>
     <h1>EXBRAYAT PRO</h1>
-    <p>Interventions techniques</p>
+    <p>Interventions fluides frigorigènes</p>
   </div>
-  <span class="version">Version 0.4.3.1 Gaz</span>
+  <span class="version">Version 0.4.2.9 Pense-bête mesures</span>
 </header>
 
 <nav class="tabs" aria-label="Navigation">
   <button class="tab active" data-page="intervention">Intervention</button>
-  <button class="tab" data-page="gaz">Chaudière gaz</button>
-  <button class="tab" data-page="historique">Historique frigo</button>
+  <button class="tab" data-page="historique">Historique</button>
   <button class="tab" data-page="parametres">Entreprise</button>
 </nav>
 
@@ -321,104 +320,6 @@
 </form>
 </section>
 
-<section id="page-gaz" class="page">
-<form id="gaz-form">
-  <section class="card gaz-hero">
-    <h2>🔥 Entretien chaudière gaz</h2>
-    <p class="hint">Attestation d’entretien à remettre au client et à conserver dans l’historique local.</p>
-  </section>
-
-  <section class="card">
-    <h2>1. Client et installation</h2>
-    <div class="grid two">
-      <label>N° du contrat / attestation<input name="gazNumero" autocomplete="off"></label>
-      <label>Date de la visite<input name="gazDate" type="date"></label>
-      <label>Nom / société du client<input name="gazClientNom" required></label>
-      <label>Téléphone<input name="gazClientTel" type="tel"></label>
-      <label class="span2">Adresse du client<input name="gazClientAdresse"></label>
-      <label class="span2">Adresse de l’installation<input name="gazInstallationAdresse"></label>
-      <label class="span2">Local où se situe la chaudière<input name="gazLocal"></label>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>2. Caractéristiques de la chaudière</h2>
-    <div class="grid two">
-      <label>Marque, modèle, type<input name="gazChaudiere"></label>
-      <label>Puissance nominale Pn min / max (kW)<input name="gazPuissance"></label>
-      <label>Mode d’évacuation / type<input name="gazEvacuation"></label>
-      <label>Date de mise en service<input name="gazMiseService" type="date"></label>
-      <label>Numéro de série<input name="gazSerie"></label>
-      <label>Date du dernier entretien<input name="gazDernierEntretien" type="date"></label>
-      <label>Date du dernier ramonage<input name="gazDernierRamonage" type="date"></label>
-    </div>
-    <h3>Brûleur à air soufflé, si applicable</h3>
-    <div class="grid two">
-      <label>Marque et modèle<input name="gazBruleur"></label>
-      <label>Puissance nominale Qn min / max (kW)<input name="gazBruleurPuissance"></label>
-      <label>Date de mise en service<input name="gazBruleurDate" type="date"></label>
-      <label>Numéro de série<input name="gazBruleurSerie"></label>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>3. Prestations et points de contrôle</h2>
-    <div id="gazChecklist" class="gaz-checklist"></div>
-    <h3>Prestations complémentaires</h3>
-    <div id="gazChecklistExtra" class="gaz-checklist"></div>
-  </section>
-
-  <section class="card">
-    <h2>4. Mesures et combustion</h2>
-    <div class="grid four">
-      <label>Température fumées (°C)<input name="gazTempFumees" type="number" step="0.1" inputmode="decimal"></label>
-      <label>Température ambiante (°C)<input name="gazTempAmbiante" type="number" step="0.1" inputmode="decimal"></label>
-      <label>CO₂ (%)<input name="gazCO2" type="number" step="0.01" inputmode="decimal"></label>
-      <label>O₂ (%)<input name="gazO2" type="number" step="0.01" inputmode="decimal"></label>
-      <label>CO à proximité (ppm)<input name="gazCO" type="number" step="1" inputmode="numeric"></label>
-      <label>Rendement évalué (%)<input name="gazRendement" type="number" step="0.1" inputmode="decimal"></label>
-      <label>Rendement de référence (%)<input name="gazRendementRef" type="number" step="0.1" inputmode="decimal"></label>
-      <label>NOx évalués (mg/kWh)<input name="gazNox" type="number" step="1" inputmode="numeric"></label>
-      <label class="span2">Appareil de mesure : marque et référence<input name="gazAppareilMesure"></label>
-      <label>Classe chaudière
-        <select name="gazClasseType"><option value="">Choisir</option><option>Standard / basse température</option><option>Condensation</option></select>
-      </label>
-      <label>Année / période
-        <select name="gazClasseDate"><option value="">Choisir</option><option>Avant 2005</option><option>Après 2005</option></select>
-      </label>
-    </div>
-    <div id="gazCoStatus" class="status-info">Saisissez la teneur en CO pour afficher l’évaluation.</div>
-  </section>
-
-  <section class="card">
-    <h2>5. Défauts, conseils et recommandations</h2>
-    <label>Défauts corrigés suite aux opérations d’entretien<textarea name="gazDefauts" rows="4"></textarea></label>
-    <label>Conseils et recommandations<textarea name="gazConseils" rows="5"></textarea></label>
-  </section>
-
-  <section class="card">
-    <h2>6. Signatures</h2>
-    <div class="signature-grid">
-      <div><h3>Technicien</h3><canvas id="gazSignatureTechnicien" class="signature" width="900" height="300"></canvas><button type="button" class="secondary gaz-clear-signature" data-target="gazSignatureTechnicien">Effacer</button></div>
-      <div><h3>Client</h3><canvas id="gazSignatureClient" class="signature" width="900" height="300"></canvas><button type="button" class="secondary gaz-clear-signature" data-target="gazSignatureClient">Effacer</button></div>
-    </div>
-  </section>
-
-  <div class="actions sticky">
-    <button type="button" id="gazSaveBtn">Enregistrer l’entretien</button>
-    <button type="button" id="gazPdfBtn" class="success">Créer l’attestation PDF</button>
-    <button type="button" id="gazNewBtn" class="danger">Nouvel entretien</button>
-  </div>
-</form>
-
-<section class="card">
-  <h2>Historique des entretiens gaz</h2>
-  <p class="hint">Archivage local sur cet appareil.</p>
-  <input id="gazHistorySearch" placeholder="Rechercher un client, une date ou un numéro">
-  <div id="gazHistoryList"></div>
-</section>
-</section>
-
 <section id="page-historique" class="page">
   <section class="card">
     <h2>Historique local</h2>
@@ -460,6 +361,5 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="pdf-lib.min.js?v=0.4.2.9"></script>
 <script src="app.js?v=0.4.2.10"></script>
-<script src="gaz.js?v=0.4.3.6"></script>
 </body>
 </html>

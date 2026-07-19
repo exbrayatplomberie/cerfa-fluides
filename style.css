@@ -214,11 +214,3 @@ body.locked>main{
   .diagnostic-table>div:last-child{border-bottom:0}
 }
 @media print{.measurement-help{display:none!important}}
-
-/* Module entretien chaudière gaz */
-.gaz-hero{border-left:7px solid #b45110;background:linear-gradient(135deg,#fff,#fff5ed)}
-.gaz-checklist{border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.gaz-check-row{display:grid;grid-template-columns:minmax(260px,1fr) 70px 70px 80px;align-items:center;border-bottom:1px solid var(--border);background:#fff}
-.gaz-check-row:last-child{border-bottom:0}.gaz-check-row>div{padding:10px;font-size:.9rem}.gaz-check-row label{flex-direction:row;align-items:center;justify-content:center;padding:8px 3px;font-size:.82rem;border-left:1px solid var(--border)}.gaz-check-row input{width:18px;height:18px;min-height:auto;-webkit-appearance:auto;appearance:auto}
-.gaz-ok{border-left-color:#176b43;background:#eaf7f0}.gaz-warn{border-left-color:#c17a00;background:#fff7df}.gaz-danger{border-left-color:#a62a2a;background:#fdecec;color:#8b1111}
-@media(max-width:720px){.gaz-check-row{grid-template-columns:1fr 1fr 1fr 1fr}.gaz-check-row>div{grid-column:1/-1;border-bottom:1px solid var(--border)}.gaz-check-row label{border-left:0}}
