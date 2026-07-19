@@ -69,7 +69,7 @@ async function createPdf(){
   try{previewWindow=window.open('about:blank','_blank')}catch(_e){}
  }
  try{
-  const templateResponse=await fetch('attestation-entretien-gaz-capeb.pdf?v=0.4.3.2',{cache:'no-store'});
+  const templateResponse=await fetch('attestation-entretien-gaz-capeb.pdf?v=0.4.3.3',{cache:'no-store'});
   if(!templateResponse.ok)throw new Error('Le modèle CAPEB est introuvable.');
   const templateBytes=await templateResponse.arrayBuffer();
   const {PDFDocument,StandardFonts}=PDFLib;
@@ -87,13 +87,8 @@ async function createPdf(){
   const selectRadio=(name,value)=>{
    try{formPdf.getRadioGroup(name).select(value)}catch(e){console.warn('Choix PDF absent :',name,value,e)}
   };
-  const company='EXBRAYAT CEDRIC PLOMBERIE CHAUFFAGE
-26 avenue de Jumeaux
-63570 BRASSAC LES MINES
-Tel : 06 17 16 15 38
-e-mail : cedric.exbrayat@orange.fr';
-  const client=[d.gazClientNom,d.gazClientTel,d.gazClientAdresse].filter(Boolean).join('
-');
+  const company='EXBRAYAT CEDRIC PLOMBERIE CHAUFFAGE\n26 avenue de Jumeaux\n63570 BRASSAC LES MINES\nTel : 06 17 16 15 38\ne-mail : cedric.exbrayat@orange.fr';
+  const client=[d.gazClientNom,d.gazClientTel,d.gazClientAdresse].filter(Boolean).join('\n');
   setText('A2-Coordonnees prestataire',company,7);
   setText('A2-Coordonnees client',client,8);
   setText('A2-Adresse installation',d.gazInstallationAdresse,8);

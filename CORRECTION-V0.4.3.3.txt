@@ -1,0 +1,12 @@
+EXBRAYAT PRO V0.4.3.3 — CORRECTION MODULE GAZ
+
+Correction ciblée :
+- réapparition complète de la checklist gaz ;
+- signatures technicien et client fonctionnelles ;
+- génération du PDF CAPEB fonctionnelle ;
+- fonctionnement iPad conservé ;
+- modèle PDF CAPEB original conservé.
+
+Cause corrigée : une erreur de syntaxe dans gaz.js empêchait tout le module gaz de se charger.
+
+Installation : remplacer intégralement le contenu du dépôt GitHub par le contenu de ce ZIP, attendre 2 minutes, fermer complètement l’application sur iPad puis la rouvrir.
