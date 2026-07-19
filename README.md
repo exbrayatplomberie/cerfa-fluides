@@ -9,3 +9,9 @@ Modification unique :
 - le bouton Nouvelle fiche vide l'ancien numéro et en crée un nouveau ;
 - le numéro reste identique lors de la modification d'une fiche existante ;
 - CERFA, case 6, rapport, signatures, boutons et verrouillage inchangés.
+
+
+VERSION 0.4.3.2
+- L'attestation gaz utilise maintenant le PDF CAPEB original comme modèle.
+- Tous les champs sont inscrits directement sur le document original.
+- Ouverture/partage du PDF adaptée à l'iPad et à Safari iOS.
