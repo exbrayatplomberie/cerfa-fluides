@@ -72,19 +72,28 @@ async function createPdf(){
   }catch(_e){}
  }
  try{
-  const response=await fetch('attestation-entretien-gaz-capeb.pdf?v=0.4.3.4',{cache:'no-store'});
+  const response=await fetch('attestation-entretien-gaz-capeb.pdf?v=0.4.3.6',{cache:'no-store'});
   if(!response.ok)throw new Error('Le modèle CAPEB est introuvable.');
   const templateBytes=await response.arrayBuffer();
-  const {PDFDocument,StandardFonts,rgb}=PDFLib;
+  const {PDFDocument,StandardFonts,rgb,PDFName}=PDFLib;
   const pdf=await PDFDocument.load(templateBytes,{ignoreEncryption:true,updateMetadata:false});
   const pages=pdf.getPages();
   const font=await pdf.embedFont(StandardFonts.Helvetica);
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   const black=rgb(0,0,0);
 
-  // Le formulaire PDF CAPEB d'origine est mal interprété par certains lecteurs,
-  // notamment Safari/iPad. On l'aplatit puis on écrit directement sur les pages.
-  try{pdf.getForm().flatten()}catch(e){console.warn('Aplatissement du modèle CAPEB :',e)}
+  // Ne pas aplatir les champs CAPEB : leur apparence grise pouvait être dessinée
+  // au-dessus des textes ajoutés, surtout sur la page 3. On supprime directement
+  // les annotations interactives, puis on écrit sur le fond original du document.
+  // Les zones bleues et les boutons radio du modèle sont des annotations PDF.
+  // Certains lecteurs (Chrome, Safari et iPad) les affichent au-dessus du texte ajouté.
+  // On supprime donc toutes les annotations du modèle après aplatissement pour que
+  // les valeurs, les croix et les signatures restent visibles partout.
+  try{
+   for(const page of pages){page.node.delete(PDFName.of('Annots'))}
+   const acroForm=pdf.catalog.get(PDFName.of('AcroForm'));
+   if(acroForm)pdf.catalog.delete(PDFName.of('AcroForm'));
+  }catch(e){console.warn('Suppression des champs interactifs CAPEB :',e)}
 
   const clean=v=>pdfSafe(v||'');
   function fitSize(text,f,maxSize,maxWidth){
@@ -188,13 +197,27 @@ async function createPdf(){
 
   save();
   if(isIOS){
-   // Sur iPad, un onglet est ouvert dès le clic afin d'éviter le blocage Safari
-   // provoqué par les traitements asynchrones. Le PDF est ensuite injecté dedans.
-   let binary='';const chunk=0x8000;
-   for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(i+chunk,bytes.length)));
-   const dataUrl='data:application/pdf;base64,'+btoa(binary);
-   if(previewWindow&&!previewWindow.closed){previewWindow.location.replace(dataUrl)}
-   else{window.location.href=dataUrl}
+   const url=URL.createObjectURL(blob);
+   const file=new File([blob],filename,{type:'application/pdf'});
+   let shared=false;
+   try{
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+     if(previewWindow&&!previewWindow.closed)previewWindow.close();
+     await navigator.share({files:[file],title:'Attestation entretien chaudière gaz'});
+     shared=true;
+    }
+   }catch(e){console.warn('Partage iPad indisponible :',e)}
+   if(!shared){
+    if(previewWindow&&!previewWindow.closed)previewWindow.close();
+    const old=document.getElementById('gazPdfIosDialog');if(old)old.remove();
+    const box=document.createElement('div');box.id='gazPdfIosDialog';
+    box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+    box.innerHTML='<div style="background:#fff;border-radius:14px;padding:22px;max-width:420px;width:100%;font-family:Arial;text-align:center"><h2 style="margin-top:0">Attestation créée</h2><p>Appuyez sur le bouton ci-dessous pour ouvrir le PDF sur l’iPad.</p><a id="gazPdfIosOpen" style="display:block;background:#087a46;color:#fff;text-decoration:none;padding:15px;border-radius:9px;font-weight:bold;margin:16px 0" target="_blank" rel="noopener">Ouvrir / partager le PDF</a><button id="gazPdfIosClose" type="button" style="padding:11px 18px">Fermer</button></div>';
+    document.body.appendChild(box);
+    const link=document.getElementById('gazPdfIosOpen');link.href=url;
+    document.getElementById('gazPdfIosClose').onclick=()=>{box.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+    setTimeout(()=>URL.revokeObjectURL(url),600000);
+   }else setTimeout(()=>URL.revokeObjectURL(url),120000);
   }else{
    const url=URL.createObjectURL(blob);
    const a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';a.rel='noopener';
